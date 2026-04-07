@@ -132,7 +132,10 @@
     id="vrScene"
     embedded
     vr-mode-ui="enabled: true"
-    renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.1; highRefreshRate: true"
+    renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.15; highRefreshRate: true; foveationLevel: 1; anisotropy: 16; logarithmicDepthBuffer: true; maxCanvasWidth: 3840; maxCanvasHeight: 2160"
+    shadow="type: pcfsoft; autoUpdate: true"
+    hdri-environment
+    quality-boost
     fog="type: exponential; color: #0a0a0f; density: 0.02"
     loading-screen="enabled: false"
   >
@@ -399,6 +402,7 @@
   <!-- ============================================= -->
   <!--                JavaScript                      -->
   <!-- ============================================= -->
+  <script src="js/quality.js"></script>
   <script src="js/config.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/audio.js"></script>
@@ -419,11 +423,11 @@
         const text = el.dataset.text || '';
         const color = el.dataset.color || '#ffffff';
         const c = document.createElement('canvas');
-        c.width = 1024; c.height = 256;
+        c.width = 2048; c.height = 512;
         const ctx = c.getContext('2d');
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(0,0,c.width,c.height);
-        ctx.font = 'bold 88px "Segoe UI","Tahoma",Arial,sans-serif';
+        ctx.font = 'bold 176px "Segoe UI","Tahoma",Arial,sans-serif';
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

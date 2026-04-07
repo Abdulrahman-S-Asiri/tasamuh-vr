@@ -1,0 +1,83 @@
+/* ============================================= */
+/*  التوافق مع الشاشات المختلفة                   */
+/* ============================================= */
+
+/* الجوال */
+@media (max-width: 600px) {
+  .gender-options {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-gender {
+    width: 200px;
+  }
+
+  .choices-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .choice-card {
+    width: 90%;
+    max-width: 300px;
+  }
+
+  .result-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .silhouette {
+    transform: scale(0.85);
+    margin-bottom: 30px;
+  }
+
+  .phase-content {
+    padding: 20px;
+  }
+}
+
+/* تابلت */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .choice-card {
+    width: 240px;
+  }
+}
+
+/* شاشات كبيرة */
+@media (min-width: 1400px) {
+  .phase-content {
+    max-width: 900px;
+  }
+
+  .choice-card {
+    width: 300px;
+    padding: 44px 36px 32px;
+  }
+}
+
+/* الوضع الأفقي في الجوال */
+@media (max-height: 500px) and (orientation: landscape) {
+  .silhouette {
+    transform: scale(0.55);
+    margin-bottom: 15px;
+  }
+
+  .intro-title {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .intro-subtitle {
+    margin-bottom: 25px;
+  }
+
+  .choices-grid {
+    gap: 16px;
+  }
+
+  .choice-card {
+    padding: 20px;
+  }
+}

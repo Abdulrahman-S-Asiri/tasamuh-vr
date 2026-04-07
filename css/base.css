@@ -1,0 +1,203 @@
+/* ============================================= */
+/*  الأساسيات والتنسيق العام                     */
+/* ============================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  direction: rtl;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === المراحل (Phases) === */
+.phase {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-slow), visibility var(--transition-slow);
+}
+
+.phase.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.phase-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.phase-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 750px;
+  width: 100%;
+  padding: 30px;
+}
+
+/* === شاشة التحميل === */
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-slow);
+}
+
+#loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-ring {
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loader-text {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--color-text-dim);
+}
+
+/* === شريط التقدم === */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 2000;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-accent), rgba(100, 200, 255, 0.6));
+  transition: width var(--transition-slow);
+}
+
+/* === زر الصوت === */
+.audio-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.audio-toggle:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.audio-bars {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 16px;
+}
+
+.audio-bars span {
+  width: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+  transition: height 0.2s ease;
+}
+
+.audio-bars span:nth-child(1) { height: 5px;  animation: audioWave 0.8s ease-in-out infinite 0s; }
+.audio-bars span:nth-child(2) { height: 11px; animation: audioWave 0.8s ease-in-out infinite 0.1s; }
+.audio-bars span:nth-child(3) { height: 7px;  animation: audioWave 0.8s ease-in-out infinite 0.2s; }
+.audio-bars span:nth-child(4) { height: 13px; animation: audioWave 0.8s ease-in-out infinite 0.3s; }
+
+.audio-toggle.muted .audio-bars span {
+  animation: none !important;
+  height: 3px !important;
+}
+
+.audio-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* === A-Frame Scene === */
+#vrScene {
+  position: fixed !important;
+  inset: 0;
+  z-index: 1;
+}
+
+.a-enter-vr-button {
+  z-index: 500 !important;
+}
+
+/* === أزرار عامة === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-bounce);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}

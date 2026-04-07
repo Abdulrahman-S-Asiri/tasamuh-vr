@@ -1,0 +1,90 @@
+/* ============================================= */
+/*  جميع الحركات (Animations)                     */
+/* ============================================= */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ambientPulse {
+  0%   { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes auraPulse {
+  0%, 100% { transform: scale(1);   opacity: 0.5; }
+  50%      { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%      { opacity: 0.5;  transform: scale(1.3); }
+}
+
+@keyframes audioWave {
+  0%, 100% { height: 3px; }
+  50%      { height: 16px; }
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-30px) scale(1); opacity: 0; }
+}
+
+@keyframes shardFall {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0.8; }
+  100% { transform: translate(var(--sx), 100vh) rotate(var(--sr)); opacity: 0; }
+}
+
+@keyframes glitchDrift {
+  0%, 100% { transform: translateY(0);     opacity: 0.25; }
+  25%      { transform: translateY(-15px); opacity: 0.5; }
+  50%      { transform: translateY(5px);   opacity: 0.15; }
+  75%      { transform: translateY(-8px);  opacity: 0.45; }
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(-6px); }
+}
+
+@keyframes resultBounce {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes gardenGlow {
+  0%   { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes darkPulse {
+  0%   { opacity: 0.4; transform: scale(1); }
+  100% { opacity: 1;   transform: scale(1.03); }
+}
+
+/* حركة اهتزاز خفيفة (للانتقام) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  50%      { transform: translateX(4px); }
+  75%      { transform: translateX(-2px); }
+}
+
+/* حركة الكتابة */
+@keyframes typeReveal {
+  to { opacity: 1; }
+}

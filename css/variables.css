@@ -1,0 +1,53 @@
+/* ============================================= */
+/*  متغيرات التصميم الأساسية                     */
+/*  عدّل هنا لتغيير الألوان والخطوط بسهولة       */
+/* ============================================= */
+
+:root {
+  /* === الألوان الأساسية === */
+  --color-bg:           #0a0a0f;
+  --color-bg-light:     #111118;
+  --color-text:         #ffffff;
+  --color-text-muted:   rgba(255, 255, 255, 0.5);
+  --color-text-dim:     rgba(255, 255, 255, 0.3);
+
+  /* === ألوان الأجواء === */
+  --color-accent:       rgba(140, 130, 255, 0.6);
+  --color-accent-soft:  rgba(100, 120, 255, 0.08);
+  --color-purple-soft:  rgba(180, 100, 255, 0.06);
+
+  /* === ألوان التسامح === */
+  --forgive-primary:    #22c55e;
+  --forgive-light:      #6ee7b7;
+  --forgive-bg:         #064e3b;
+  --forgive-bg-end:     #059669;
+  --forgive-glow:       rgba(52, 211, 153, 0.15);
+
+  /* === ألوان الانتقام === */
+  --revenge-primary:    #ef4444;
+  --revenge-light:      #fca5a5;
+  --revenge-bg:         #1a0000;
+  --revenge-bg-end:     #3b0f0f;
+  --revenge-glow:       rgba(239, 68, 68, 0.1);
+
+  /* === الخطوط === */
+  --font-main:          'Tajawal', sans-serif;
+
+  /* === الأحجام === */
+  --radius-sm:          8px;
+  --radius-md:          16px;
+  --radius-lg:          20px;
+  --radius-full:        60px;
+
+  /* === الظلال === */
+  --shadow-soft:        0 8px 30px rgba(0, 0, 0, 0.3);
+  --shadow-glow-green:  0 20px 60px rgba(34, 197, 94, 0.2);
+  --shadow-glow-red:    0 20px 60px rgba(239, 68, 68, 0.2);
+  --shadow-glow-purple: 0 0 40px rgba(100, 120, 255, 0.3);
+
+  /* === الانتقالات === */
+  --transition-fast:    0.3s ease;
+  --transition-medium:  0.5s ease;
+  --transition-slow:    0.8s ease;
+  --transition-bounce:  0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}

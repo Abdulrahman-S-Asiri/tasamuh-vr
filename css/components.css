@@ -1,0 +1,47 @@
+/* ============================================= */
+/*  الجسيمات (Particles)                          */
+/* ============================================= */
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatUp linear infinite;
+}
+
+/* ============================================= */
+/*  تأثير التحطم (Shatter)                        */
+/* ============================================= */
+.shatter-fx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.shard {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  animation: shardFall linear forwards;
+}
+
+/* نصوص مشفرة */
+.glitch-float {
+  position: absolute;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: rgba(239, 68, 68, 0.35);
+  pointer-events: none;
+  animation: glitchDrift 4s ease-in-out infinite;
+  user-select: none;
+}

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="تجربة واقع افتراضي تفاعلية عن التسامح">
+  <meta name="theme-color" content="#0a0a0f">
+  
+  <title>تجربة التسامح - VR</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- A-Frame VR Engine -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- A-Frame Extras: حركة + teleport + تحكم Quest -->
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
+  <!-- مكوّن teleport-controls -->
+  <script src="https://unpkg.com/aframe-blink-controls@0.4.3/dist/aframe-blink-controls.min.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/phases.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+  <!-- ============================================= -->
+  <!--              شاشة التحميل                      -->
+  <!-- ============================================= -->
+  <div id="loading">
+    <div class="loader-ring"></div>
+    <div class="loader-text">جاري تحميل التجربة...</div>
+  </div>
+
+  <!-- شريط التقدم -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- زر الصوت -->
+  <div class="audio-toggle" id="audioToggle">
+    <div class="audio-bars" id="audioBars">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <span class="audio-label">الصوت</span>
+  </div>
+
+  <!-- ============================================= -->
+  <!--         المرحلة 1: بوابة الدخول                -->
+  <!-- ============================================= -->
+  <section class="phase active" id="phase-intro" data-phase="intro">
+    <div class="phase-bg intro-bg"></div>
+    <div class="particles" id="introParticles"></div>
+    
+    <div class="phase-content">
+      <p class="project-badge" id="projectName">اسم المشروع</p>
+      
+      <h1 class="intro-title">
+        "التسامح مو ضعف... هو قرار.<br>
+        جرّب تشوف أثره بنفسك"
+      </h1>
+      
+      <p class="intro-subtitle">تجربة تفاعلية غامرة</p>
+      
+      <div class="gender-section">
+        <p class="gender-prompt">اختر:</p>
+        <div class="gender-options">
+          <button class="btn btn-gender" data-gender="male" onclick="App.selectGender('male')">
+            <span class="btn-icon">♂</span>
+            <span>ذكر</span>
+          </button>
+          <button class="btn btn-gender" data-gender="female" onclick="App.selectGender('female')">
+            <span class="btn-icon">♀</span>
+            <span>أنثى</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HUD نصي شفاف للمواجهة (داخل العالم 3D) -->
+  <div id="vrHud">
+    <p class="vrhud-text" id="vrHudText"></p>
+  </div>
+
+  <!-- HUD صغير في زاوية بعد القرار -->
+  <div id="resultHud">
+    <div id="resultHudInner"></div>
+  </div>
+
+  <!-- (مرحلة النتيجة القديمة أُزيلت — استُبدلت بـ #resultHud الذي يطفو فوق العالم 3D) -->
+  <section class="phase" id="phase-result" data-phase="result" style="display:none">
+    <div class="phase-bg result-bg" id="resultBg"></div>
+    <div class="particles" id="resultParticles"></div>
+    <div class="shatter-fx" id="shatterFx"></div>
+    <div class="phase-content"><div class="result-card" id="resultCard"></div></div>
+  </section>
+
+  <!-- ============================================= -->
+  <!--           المرحلة 5: الخاتمة                   -->
+  <!-- ============================================= -->
+  <section class="phase" id="phase-closing" data-phase="closing">
+    <div class="phase-bg closing-bg"></div>
+    <div class="particles" id="closingParticles"></div>
+    
+    <div class="phase-content">
+      <div class="closing-card">
+        <div class="closing-icon">💛</div>
+        <h2 class="closing-title">
+          كل قرار تاخذه في حياتك...<br>
+          يرسم جزء من عالمك.
+        </h2>
+        <p class="closing-subtitle">اختر بحكمة</p>
+        <div class="closing-divider"></div>
+        <p class="closing-brand" id="closingProject">اسم المشروع</p>
+        <button class="btn btn-restart" onclick="App.restart()">
+          <span>🔄</span> أعد التجربة
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================= -->
+  <!--             مشهد A-Frame VR                    -->
+  <!-- ============================================= -->
+  <a-scene
+    id="vrScene"
+    embedded
+    vr-mode-ui="enabled: true"
+    renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.1; highRefreshRate: true"
+    fog="type: exponential; color: #0a0a0f; density: 0.02"
+    loading-screen="enabled: false"
+  >
+    <!-- السماء -->
+    <a-sky id="vrSky" color="#0a0a0f"></a-sky>
+
+    <!-- الكاميرا + الجهاز كامل -->
+    <a-entity id="vrRig" position="0 1 0">
+      <a-entity
+        id="vrCamera"
+        camera
+        look-controls="pointerLockEnabled: false; magicWindowTrackingEnabled: true; touchEnabled: true"
+        wasd-controls="enabled: false"
+        position="0 1.6 0"
+      >
+        <!-- مؤشر النظر للـ VR -->
+        <a-entity
+          id="vrCursor"
+          cursor="fuse: true; fuseTimeout: 1500"
+          raycaster="objects: .vr-clickable; far: 20"
+          position="0 0 -1"
+          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015"
+          material="color: white; shader: flat; opacity: 0.6"
+        >
+          <a-animation
+            begin="cursor-fusing"
+            attribute="geometry.radiusOuter"
+            from="0.015"
+            to="0.01"
+            dur="1500"
+          ></a-animation>
+        </a-entity>
+      </a-entity>
+
+      <!-- يدا Quest 3 / 3S -->
+      <a-entity id="leftHand"
+                oculus-touch-controls="hand: left"
+                blink-controls="cameraRig: #vrRig; teleportOrigin: #vrCamera; rotateOnTeleport: false; collisionEntities: a-circle"></a-entity>
+      <a-entity id="rightHand"
+                oculus-touch-controls="hand: right"
+                laser-controls="hand: right"
+                raycaster="objects: .vr-clickable; far: 30"></a-entity>
+    </a-entity>
+
+    <!-- ===== بيئة محايدة (بداية المواجهة) ===== -->
+    <a-entity id="env-neutral" visible="false">
+      <a-circle radius="150" position="0 0 0" rotation="-90 0 0"
+                material="color: #2a2a35; roughness: 1"></a-circle>
+      <a-light type="ambient" color="#445566" intensity="0.4"></a-light>
+      <a-light type="directional" color="#7788aa" intensity="0.5" position="0 20 -10"></a-light>
+    </a-entity>
+
+    <!-- ===== الظل البشري ثلاثي الأبعاد ===== -->
+    <a-entity id="vr-silhouette" position="0 0 -5" visible="false">
+      <a-cylinder height="1.4" radius="0.32" color="#000000"
+                  position="0 0.7 0" material="roughness: 1; metalness: 0"></a-cylinder>
+      <a-sphere radius="0.32" color="#000000" position="0 1.7 0"
+                material="roughness: 1"></a-sphere>
+      <!-- عينان حمراوان متوهجتان -->
+      <a-sphere radius="0.04" color="#ff1100" position="-0.1 1.78 0.28"
+                material="emissive: #ff0000; emissiveIntensity: 1"></a-sphere>
+      <a-sphere radius="0.04" color="#ff1100" position="0.1 1.78 0.28"
+                material="emissive: #ff0000; emissiveIntensity: 1"></a-sphere>
+      <!-- هالة منذرة -->
+      <a-ring radius-inner="0.55" radius-outer="0.7" position="0 0.05 0"
+              rotation="-90 0 0" color="#330000"
+              material="emissive: #660000; emissiveIntensity: 0.6; opacity: 0.7"
+              animation="property: rotation; to: -90 360 0; loop: true; dur: 8000"></a-ring>
+    </a-entity>
+
+    <!-- ===== بوّابات القرار (4 خيارات في قوس) ===== -->
+    <a-entity id="vr-portals" visible="false">
+      <!-- بوابة العدل -->
+      <a-entity id="portal-just" position="-9 1.7 -8">
+        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#3b82f6"
+                 material="emissive: #1d4ed8; emissiveIntensity: 0.9; metalness: 0.3"
+                 animation="property: rotation; to: 0 360 0; loop: true; dur: 14000"></a-torus>
+        <a-circle class="vr-clickable" radius="1.45" color="#0a1f3b"
+                  material="opacity: 0.5; transparent: true; emissive: #1d4ed8; emissiveIntensity: 0.4"></a-circle>
+        <a-plane position="0 2.6 0" width="4" height="1"
+                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
+                 data-text="العدل — اطلب الحق" data-color="#bfdbfe"></a-plane>
+        <a-light type="point" color="#3b82f6" intensity="1.5" distance="8"
+                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
+      </a-entity>
+      <!-- بوابة التسامح -->
+      <a-entity id="portal-forgive" position="-3 1.7 -8">
+        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#22c55e"
+                 material="emissive: #16a34a; emissiveIntensity: 0.9; metalness: 0.3"
+                 animation="property: rotation; to: 0 360 0; loop: true; dur: 12000"></a-torus>
+        <a-circle class="vr-clickable" radius="1.45" color="#0a3b1a"
+                  material="opacity: 0.5; transparent: true; emissive: #16a34a; emissiveIntensity: 0.4"></a-circle>
+        <a-plane id="label-forgive" position="0 2.6 0" width="4" height="1"
+                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
+                 data-text="التسامح — اعفُ وسامح" data-color="#bbf7d0"></a-plane>
+        <a-text value="🕊" align="center" position="0 0 0.05"
+                color="#ffffff" width="8"></a-text>
+        <a-light type="point" color="#22c55e" intensity="1.5" distance="8"
+                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
+      </a-entity>
+      <!-- بوابة التجاهل -->
+      <a-entity id="portal-ignore" position="3 1.7 -8">
+        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#94a3b8"
+                 material="emissive: #64748b; emissiveIntensity: 0.9; metalness: 0.3"
+                 animation="property: rotation; to: 0 360 0; loop: true; dur: 16000"></a-torus>
+        <a-circle class="vr-clickable" radius="1.45" color="#1e293b"
+                  material="opacity: 0.5; transparent: true; emissive: #64748b; emissiveIntensity: 0.4"></a-circle>
+        <a-plane position="0 2.6 0" width="4" height="1"
+                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
+                 data-text="التجاهل — تجاوز" data-color="#e2e8f0"></a-plane>
+        <a-light type="point" color="#94a3b8" intensity="1.2" distance="8"
+                 animation="property: intensity; from: 0.8; to: 1.6; dur: 1500; loop: true; dir: alternate"></a-light>
+      </a-entity>
+      <!-- بوابة الانتقام -->
+      <a-entity id="portal-revenge" position="9 1.7 -8">
+        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#ef4444"
+                 material="emissive: #b91c1c; emissiveIntensity: 0.9; metalness: 0.3"
+                 animation="property: rotation; to: 0 -360 0; loop: true; dur: 12000"></a-torus>
+        <a-circle class="vr-clickable" radius="1.45" color="#3b0000"
+                  material="opacity: 0.5; transparent: true; emissive: #b91c1c; emissiveIntensity: 0.4"></a-circle>
+        <a-plane id="label-revenge" position="0 2.6 0" width="4" height="1"
+                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
+                 data-text="الانتقام — ردّ الإساءة" data-color="#fecaca"></a-plane>
+        <a-text value="⚡" align="center" position="0 0 0.05"
+                color="#ffffff" width="8"></a-text>
+        <a-light type="point" color="#ef4444" intensity="1.5" distance="8"
+                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
+      </a-entity>
+    </a-entity>
+
+    <!-- ===== بوّابات الجولة الثانية (تُملأ ديناميكياً) ===== -->
+    <a-entity id="vr-portals-2" visible="false"></a-entity>
+
+    <!-- ===== شخصيات NPC (تُملأ ديناميكياً) ===== -->
+    <a-entity id="vr-npcs"></a-entity>
+
+    <!-- ===== عناصر تفاعلية (تُملأ ديناميكياً) ===== -->
+    <a-entity id="vr-interactives"></a-entity>
+
+    <!-- ===== بيئة التسامح (الحديقة) - ضخمة، تُبنى إجرائياً ===== -->
+    <a-entity id="env-garden" visible="false"></a-entity>
+
+    <!-- ===== بيئة الانتقام (الظلام) - ضخمة، تُبنى إجرائياً ===== -->
+    <a-entity id="env-dark" visible="false"></a-entity>
+
+    <!-- محتوى قديم محذوف (المولد الإجرائي يستبدله) -->
+    <template id="legacy-static">
+      <!-- الأرض -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="60" height="60"
+               material="color: #1a5c2a; shader: flat"></a-plane>
+      
+      <!-- ممر -->
+      <a-plane position="0 0.01 -3" rotation="-90 0 0" width="2" height="12"
+               material="color: #d4a76a; shader: flat; opacity: 0.6"></a-plane>
+
+      <!-- أشجار -->
+      <a-entity id="tree1" position="-4 0 -6">
+        <a-cylinder height="3" radius="0.2" color="#5D4037" position="0 1.5 0"></a-cylinder>
+        <a-sphere radius="1.8" color="#2E7D32" position="0 3.5 0"></a-sphere>
+      </a-entity>
+      <a-entity id="tree2" position="5 0 -8">
+        <a-cylinder height="4" radius="0.25" color="#4E342E" position="0 2 0"></a-cylinder>
+        <a-sphere radius="2" color="#388E3C" position="0 4.5 0"></a-sphere>
+      </a-entity>
+      <a-entity id="tree3" position="-6 0 -10">
+        <a-cylinder height="3.5" radius="0.2" color="#5D4037" position="0 1.75 0"></a-cylinder>
+        <a-sphere radius="1.5" color="#43A047" position="0 4 0"></a-sphere>
+      </a-entity>
+      <a-entity id="tree4" position="3 0 -12">
+        <a-cylinder height="3" radius="0.18" color="#4E342E" position="0 1.5 0"></a-cylinder>
+        <a-sphere radius="1.3" color="#2E7D32" position="0 3.3 0"></a-sphere>
+      </a-entity>
+
+      <!-- زهور -->
+      <a-sphere position="-2 0.2 -3" radius="0.2" color="#FF6B9D"></a-sphere>
+      <a-sphere position="1.5 0.25 -4" radius="0.25" color="#FFD93D"></a-sphere>
+      <a-sphere position="-1 0.2 -5" radius="0.2" color="#FF8A5C"></a-sphere>
+      <a-sphere position="3 0.15 -6" radius="0.15" color="#A388EE"></a-sphere>
+      <a-sphere position="-3 0.2 -7" radius="0.2" color="#6DD5ED"></a-sphere>
+      <a-sphere position="2 0.18 -8" radius="0.18" color="#FF6B9D"></a-sphere>
+      <a-sphere position="-4 0.22 -4" radius="0.22" color="#FFD93D"></a-sphere>
+      <a-sphere position="4 0.2 -5" radius="0.2" color="#FF8A5C"></a-sphere>
+      <a-sphere position="0 0.15 -9" radius="0.15" color="#A388EE"></a-sphere>
+      <a-sphere position="-2 0.2 -10" radius="0.2" color="#6DD5ED"></a-sphere>
+
+      <!-- فراشات -->
+      <a-entity id="butterfly1" position="-1 2 -4"
+                animation="property: position; to: 1 2.5 -5; dur: 5000; easing: easeInOutSine; loop: true; dir: alternate">
+        <a-triangle color="#FFD93D" vertex-a="0 0 0" vertex-b="-0.15 0.1 0" vertex-c="-0.1 -0.1 0"
+                    material="side: double; shader: flat; opacity: 0.8"
+                    animation="property: rotation; to: 0 0 30; dur: 300; loop: true; dir: alternate"></a-triangle>
+        <a-triangle color="#FFD93D" vertex-a="0 0 0" vertex-b="0.15 0.1 0" vertex-c="0.1 -0.1 0"
+                    material="side: double; shader: flat; opacity: 0.8"
+                    animation="property: rotation; to: 0 0 -30; dur: 300; loop: true; dir: alternate"></a-triangle>
+      </a-entity>
+
+      <!-- شخصيات مبتسمة (أشكال بسيطة) -->
+      <a-entity id="happyChar1" position="-3 0 -5">
+        <a-cylinder height="1.2" radius="0.25" color="#FFCC80" position="0 0.6 0"></a-cylinder>
+        <a-sphere radius="0.3" color="#FFE0B2" position="0 1.5 0"></a-sphere>
+        <!-- ابتسامة -->
+        <a-ring position="0 1.42 0.28" rotation="0 0 0" radius-inner="0.06" radius-outer="0.08" 
+                theta-start="180" theta-length="180" color="#5D4037" material="shader: flat"></a-ring>
+      </a-entity>
+      <a-entity id="happyChar2" position="3 0 -7">
+        <a-cylinder height="1.2" radius="0.25" color="#FFCC80" position="0 0.6 0"></a-cylinder>
+        <a-sphere radius="0.3" color="#FFE0B2" position="0 1.5 0"></a-sphere>
+        <a-ring position="0 1.42 0.28" rotation="0 0 0" radius-inner="0.06" radius-outer="0.08" 
+                theta-start="180" theta-length="180" color="#5D4037" material="shader: flat"></a-ring>
+      </a-entity>
+
+      <!-- إضاءة الحديقة -->
+      <a-light type="ambient" color="#FFF8DC" intensity="0.5"></a-light>
+      <a-light type="directional" color="#FFE4B5" intensity="0.7" position="3 5 -2"></a-light>
+      <a-light type="hemisphere" color="#87CEEB" ground-color="#1a5c2a" intensity="0.3"></a-light>
+    </a-entity>
+
+    <!-- ===== بيئة الانتقام (الظلام) ===== -->
+    <a-entity id="env-dark" visible="false">
+      <!-- الأرض المتشققة -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="60" height="60"
+               material="color: #1a0505; shader: flat"></a-plane>
+
+      <!-- حطام متناثر -->
+      <a-box position="-3 0.5 -5" width="2" height="1" depth="0.15" color="#2d0a0a"
+             rotation="15 -10 20" material="shader: flat; opacity: 0.6"></a-box>
+      <a-box position="4 0.3 -4" width="1.5" height="0.8" depth="0.1" color="#3b0f0f"
+             rotation="-10 20 -15" material="shader: flat; opacity: 0.5"></a-box>
+      <a-box position="0 1.5 -7" width="3" height="0.1" depth="2" color="#2d0a0a"
+             rotation="10 5 -8" material="shader: flat; opacity: 0.4"></a-box>
+      <a-box position="-5 0.8 -8" width="1" height="2" depth="0.1" color="#1a0000"
+             rotation="0 0 25" material="shader: flat; opacity: 0.5"></a-box>
+      <a-box position="2 0.4 -9" width="1.8" height="0.6" depth="0.1" color="#3b0f0f"
+             rotation="5 -15 10" material="shader: flat; opacity: 0.4"></a-box>
+
+      <!-- شخصيات عدائية -->
+      <a-entity id="angryChar1" position="-2 0 -5"
+                animation="property: position; to: -1.5 0 -5.5; dur: 2000; easing: easeInOutSine; loop: true; dir: alternate">
+        <a-cylinder height="1.2" radius="0.25" color="#4A0000" position="0 0.6 0"></a-cylinder>
+        <a-sphere radius="0.3" color="#3b0f0f" position="0 1.5 0"></a-sphere>
+      </a-entity>
+      <a-entity id="angryChar2" position="3 0 -6"
+                animation="property: position; to: 3.8 0 -5.5; dur: 1800; easing: easeInOutSine; loop: true; dir: alternate">
+        <a-cylinder height="1.2" radius="0.25" color="#4A0000" position="0 0.6 0"></a-cylinder>
+        <a-sphere radius="0.3" color="#3b0f0f" position="0 1.5 0"></a-sphere>
+      </a-entity>
+
+      <!-- نصوص مشفرة فوق الرؤوس -->
+      <a-text value="######" position="-2 2.2 -5" align="center" color="#ff2200" opacity="0.4" width="3"
+              animation="property: opacity; from: 0.2; to: 0.6; dur: 1500; loop: true; dir: alternate"></a-text>
+      <a-text value="!@#$%" position="3 2.2 -6" align="center" color="#ff2200" opacity="0.4" width="3"
+              animation="property: opacity; from: 0.2; to: 0.6; dur: 1200; loop: true; dir: alternate"></a-text>
+
+      <!-- إضاءة مظلمة -->
+      <a-light type="ambient" color="#220000" intensity="0.25"></a-light>
+      <a-light type="point" color="#ff2200" intensity="0.3" distance="20" position="0 4 -5"
+               animation="property: intensity; from: 0.2; to: 0.5; dur: 2000; loop: true; dir: alternate"></a-light>
+      <a-light type="point" color="#ff0000" intensity="0.15" distance="10" position="-4 2 -8"
+               animation="property: intensity; from: 0.1; to: 0.3; dur: 1500; loop: true; dir: alternate"></a-light>
+    </a-entity>
+    </template>
+  </a-scene>
+
+  <!-- ============================================= -->
+  <!--                JavaScript                      -->
+  <!-- ============================================= -->
+  <script src="js/config.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/world-builder.js"></script>
+  <script src="js/movement.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/typewriter.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/vr-environment.js"></script>
+  <script src="js/phases.js"></script>
+  <script src="js/npcs.js"></script>
+  <script src="js/interactives.js"></script>
+  <script src="js/footsteps.js"></script>
+  <script>
+    // رسم النصوص العربية كصور على a-plane (a-text ما يدعم العربية)
+    function renderArabicLabels() {
+      document.querySelectorAll('.ar-label').forEach((el, i) => {
+        const text = el.dataset.text || '';
+        const color = el.dataset.color || '#ffffff';
+        const c = document.createElement('canvas');
+        c.width = 1024; c.height = 256;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0,0,c.width,c.height);
+        ctx.font = 'bold 88px "Segoe UI","Tahoma",Arial,sans-serif';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, c.width/2, c.height/2);
+        const id = 'arlabel_' + i;
+        const img = document.createElement('img');
+        img.id = id;
+        img.src = c.toDataURL();
+        let assets = document.querySelector('a-assets');
+        if (!assets) { assets = document.createElement('a-assets'); document.querySelector('a-scene').prepend(assets); }
+        assets.appendChild(img);
+        el.setAttribute('material', `src: #${id}; transparent: true; shader: flat; side: double`);
+      });
+    }
+    window.addEventListener('load', () => setTimeout(renderArabicLabels, 800));
+  </script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

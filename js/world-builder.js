@@ -42,9 +42,10 @@ const WorldBuilder = (() => {
       'water-waves': '',
     });
     river.addEventListener('loaded', () => {
-      if (window.WaterFactory) {
-        const w = window.WaterFactory.build(4, 80, 0x1e88e5);
-        river.object3D.add(w);
+      if (window.buildReflectiveWater) {
+        river.object3D.add(window.buildReflectiveWater(4, 80, 0x1e88e5));
+      } else if (window.WaterFactory) {
+        river.object3D.add(window.WaterFactory.build(4, 80, 0x1e88e5));
       }
     });
     root.appendChild(river);
@@ -123,16 +124,12 @@ const WorldBuilder = (() => {
       }
     });
 
-    // ممر متعرج
-    for (let i = 0; i < 30; i++) {
-      const z = -i * 4;
-      const x = Math.sin(i * 0.4) * 2;
-      root.appendChild(_create('a-plane', {
-        position: `${x} 0.02 ${z}`, rotation: '-90 0 0',
-        width: 2.5, height: 4,
-        material: 'color: #d4a76a; roughness: 0.8; opacity: 0.85',
-      }));
-    }
+    // ممر حجري بـ InstancedMesh
+    const pathHost = _create('a-entity');
+    root.appendChild(pathHost);
+    pathHost.addEventListener('loaded', () => {
+      if (window.buildStonePath) window.buildStonePath(pathHost.object3D, 30);
+    });
 
     // 200 شجرة شبه واقعية عبر TreeFactory (THREE.Group مباشر = أسرع)
     const treesRoot = _create('a-entity', { id: 'garden-trees', 'wind-sway': '' });

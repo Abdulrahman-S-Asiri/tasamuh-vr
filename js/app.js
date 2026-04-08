@@ -132,24 +132,52 @@ const App = (() => {
     setTimeout(next, CONFIG.timing.confrontationStart);
   }
 
-  // ===== القرار - الجولة 1 (4 بوّابات) =====
+  // ===== القرار - الجولة 1 (4 أبواب طاقة) =====
+  const DOOR1_CONFIG = [
+    { id: 'just',    color: '#3b82f6', label: 'العدل — اطلب الحق',   pos: { x: -6, y: 0, z: -10 } },
+    { id: 'forgive', color: '#22c55e', label: 'التسامح — اعفُ وسامح', pos: { x: -2, y: 0, z: -10 } },
+    { id: 'ignore',  color: '#94a3b8', label: 'التجاهل — تجاوز',     pos: { x:  2, y: 0, z: -10 } },
+    { id: 'revenge', color: '#ef4444', label: 'الانتقام — ردّ الإساءة', pos: { x:  6, y: 0, z: -10 } },
+  ];
+
+  function _buildDecision1Doors() {
+    const container = document.getElementById('vr-portals');
+    if (!container || container.dataset.built === '1') return;
+    if (!window.DoorFactory) return;
+    DOOR1_CONFIG.forEach(cfg => {
+      const door = window.DoorFactory.build({
+        id: cfg.id,
+        color: cfg.color,
+        label: cfg.label,
+        width: 1.9, height: 3.0,
+        position: cfg.pos
+      });
+      container.appendChild(door);
+    });
+    container.dataset.built = '1';
+  }
+
   function showDecision() {
     state.phase = 'decision1';
+    _buildDecision1Doors();
     if (VREnv.showPortals) VREnv.showPortals(true);
 
     const hud = document.getElementById('vrHud');
     const txt = document.getElementById('vrHudText');
     if (hud && txt) {
-      txt.textContent = 'القرار بيدك — اختر البوّابة التي تمثّل موقفك';
+      txt.textContent = 'القرار بيدك — امشِ عبر الباب الذي يمثّل موقفك';
       hud.classList.add('active');
     }
 
-    const ids = ['just', 'forgive', 'ignore', 'revenge'];
-    ids.forEach(id => {
-      const el = document.getElementById('portal-' + id);
+    DOOR1_CONFIG.forEach(cfg => {
+      const el = document.getElementById('portal-' + cfg.id);
       if (!el) return;
-      const cb = () => makeChoice1(id);
-      el.addEventListener('click', cb, { once: true });
+      // reset walkthrough fire flag (for restart)
+      const w = el.components && el.components['door-walkthrough'];
+      if (w) w._fired = false;
+      const cb = () => makeChoice1(cfg.id);
+      el.addEventListener('walkthrough', cb, { once: true });
+      el.addEventListener('click', cb, { once: true }); // fallback
       el._cb = cb;
     });
   }
@@ -185,28 +213,23 @@ const App = (() => {
     if (!container) return;
     container.innerHTML = '';
 
-    const positions = [{x:-5,z:-8},{x:0,z:-9},{x:5,z:-8}];
+    const positions = [{x:-4, z:-10},{x:0, z:-11},{x:4, z:-10}];
     tree.sub.forEach((opt, i) => {
       const p = positions[i] || positions[0];
-      const ent = document.createElement('a-entity');
-      ent.setAttribute('position', `${p.x} 1.7 ${p.z}`);
-      ent.innerHTML = `
-        <a-torus class="vr-clickable" radius="1.2" radius-tubular="0.07" color="${tree.color}"
-                 material="emissive: ${tree.color}; emissiveIntensity: 0.85; metalness: 0.3"
-                 animation="property: rotation; to: 0 360 0; loop: true; dur: 13000"></a-torus>
-        <a-circle class="vr-clickable" radius="1.15"
-                  material="color: #000; opacity: 0.5; transparent: true; emissive: ${tree.color}; emissiveIntensity: 0.35"></a-circle>
-        <a-plane position="0 2.1 0" width="3.4" height="0.85"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="${opt.title}" data-color="#ffffff"></a-plane>
-        <a-plane position="0 -1.7 0" width="3.6" height="0.55"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="${opt.desc}" data-color="#cbd5e1"></a-plane>
-        <a-light type="point" color="${tree.color}" intensity="1.2" distance="7"
-                 animation="property: intensity; from: 0.8; to: 1.6; dur: 1500; loop: true; dir: alternate"></a-light>
-      `;
+      const ent = window.DoorFactory
+        ? window.DoorFactory.build({
+            id: opt.id,
+            color: tree.color,
+            label: opt.title,
+            desc: opt.desc,
+            width: 1.7, height: 2.9,
+            position: { x: p.x, y: 0, z: p.z }
+          })
+        : document.createElement('a-entity');
+      ent.removeAttribute('id'); // avoid conflict with decision1 ids
       const cb = () => makeChoice2(parent, opt.id);
-      ent.addEventListener('click', cb);
+      ent.addEventListener('walkthrough', cb, { once: true });
+      ent.addEventListener('click', cb, { once: true });
       container.appendChild(ent);
     });
     container.setAttribute('visible', 'true');

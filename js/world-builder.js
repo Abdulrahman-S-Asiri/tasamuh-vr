@@ -36,13 +36,17 @@ const WorldBuilder = (() => {
     }));
     root.appendChild(temple);
 
-    // نهر (شريط أزرق طويل بـ animation)
-    const river = _create('a-plane', {
-      position: '8 0.05 -12', rotation: '-90 0 0',
-      width: 4, height: 80,
-      material: 'color: #1e88e5; opacity: 0.85; transparent: true; metalness: 0.7; roughness: 0.2',
+    // نهر — ماء بتأثير موجات shader
+    const river = _create('a-entity', {
+      position: '8 0.05 -12',
+      'water-waves': '',
     });
-    river.setAttribute('animation', 'property: material.opacity; from: 0.75; to: 0.95; dur: 3000; loop: true; dir: alternate');
+    river.addEventListener('loaded', () => {
+      if (window.WaterFactory) {
+        const w = window.WaterFactory.build(4, 80, 0x1e88e5);
+        river.object3D.add(w);
+      }
+    });
     root.appendChild(river);
 
     // جسر فوق النهر
@@ -97,12 +101,27 @@ const WorldBuilder = (() => {
     const root = document.getElementById('env-garden');
     if (!root || root.dataset.built === '1') return;
 
-    // أرض ضخمة (300x300)
-    const ground = _create('a-circle', {
-      radius: 150, position: '0 0 0', rotation: '-90 0 0',
-      material: 'color: #2d6e33; roughness: 0.9; metalness: 0',
+    // أرض مموّجة (wavy terrain) مع نسيج عشب + سماء تدرجية + god rays + بتلات
+    const worldHost = _create('a-entity', {
+      id: 'garden-world-host',
+      'godrays-pulse': '',
+      'petals-tick': '',
     });
-    root.appendChild(ground);
+    root.appendChild(worldHost);
+    worldHost.addEventListener('loaded', () => {
+      const parent = worldHost.object3D;
+      if (window.buildWavyTerrain) parent.add(window.buildWavyTerrain(150, 140));
+      if (window.buildGradientSky) parent.add(window.buildGradientSky('#87ceeb', '#ffe4b5'));
+      if (window.buildGodRays) parent.add(window.buildGodRays());
+      if (window.buildPetals) window.buildPetals(parent, (window.QUALITY?window.QUALITY.n(350):350), 22);
+      // Volumetric ground fog + lens-flared sun
+      if (window.buildVolumetricFog) window.buildVolumetricFog(parent, { count: (window.QUALITY?window.QUALITY.n(50):50), radius: 35, color: '#f0e0b0', height: 1.0 });
+      if (window.buildLensFlare) {
+        const sun = window.buildLensFlare(new THREE.Vector3(80, 70, -120));
+        sun.scale.set(35, 35, 1);
+        parent.add(sun);
+      }
+    });
 
     // ممر متعرج
     for (let i = 0; i < 30; i++) {
@@ -115,36 +134,27 @@ const WorldBuilder = (() => {
       }));
     }
 
-    // 200 شجرة موزعة في كل الاتجاهات
-    for (let i = 0; i < 200; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 8 + Math.random() * 130;
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
-      const h = rand(2.5, 6);
-      const r = rand(0.15, 0.35);
-      const leafR = rand(1.2, 2.5);
-      const leafColors = ['#2E7D32', '#388E3C', '#43A047', '#1B5E20', '#558B2F', '#33691E'];
-      const trunkColors = ['#5D4037', '#4E342E', '#3E2723', '#6D4C41'];
-
-      const tree = _create('a-entity', { position: `${x} 0 ${z}` });
-      tree.appendChild(_create('a-cylinder', {
-        height: h, radius: r,
-        color: trunkColors[Math.floor(Math.random() * trunkColors.length)],
-        position: `0 ${h / 2} 0`,
-        material: 'roughness: 0.9',
-      }));
-      // عدة كرات للأوراق لشكل أكثر طبيعية
-      for (let j = 0; j < 3; j++) {
-        tree.appendChild(_create('a-sphere', {
-          radius: leafR * (0.7 + Math.random() * 0.4),
-          color: leafColors[Math.floor(Math.random() * leafColors.length)],
-          position: `${rand(-0.5, 0.5)} ${h + rand(-0.3, 0.6)} ${rand(-0.5, 0.5)}`,
-          material: 'roughness: 0.85',
-        }));
+    // 200 شجرة شبه واقعية عبر TreeFactory (THREE.Group مباشر = أسرع)
+    const treesRoot = _create('a-entity', { id: 'garden-trees', 'wind-sway': '' });
+    root.appendChild(treesRoot);
+    treesRoot.addEventListener('loaded', () => {
+      const parent = treesRoot.object3D;
+      if (!window.TreeFactory) return;
+      const TREE_COUNT = window.QUALITY ? window.QUALITY.n(200) : 200;
+      for (let i = 0; i < TREE_COUNT; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 8 + Math.random() * 130;
+        const x = Math.cos(angle) * dist;
+        const z = Math.sin(angle) * dist;
+        const tree = window.TreeFactory.build({
+          height: rand(3.5, 7.5),
+          trunkR: rand(0.18, 0.38),
+          type: Math.random() < 0.3 ? 'pine' : 'broadleaf'
+        });
+        tree.position.set(x, 0, z);
+        parent.add(tree);
       }
-      root.appendChild(tree);
-    }
+    });
 
     // 300 زهرة قريبة من الممر
     const flowerColors = ['#FF6B9D', '#FFD93D', '#FF8A5C', '#A388EE', '#6DD5ED', '#FF477E', '#FFC857'];
@@ -159,51 +169,43 @@ const WorldBuilder = (() => {
       }));
     }
 
-    // جبال بعيدة (12 جبل حول المحيط)
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 130;
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
-      const h = rand(20, 45);
-      root.appendChild(_create('a-cone', {
-        position: `${x} ${h / 2} ${z}`,
-        radius: rand(15, 25), height: h,
-        color: '#5a7a8a',
-        material: 'roughness: 1; flatShading: true',
-      }));
-    }
+    // جبال صخرية بتكستشر + سحب ناعمة — تُضاف إلى worldHost
+    worldHost.addEventListener('loaded', () => {
+      const p = worldHost.object3D;
+      if (window.buildMountainRing) p.add(window.buildMountainRing(14, 130, false));
+      if (window.buildClouds) p.add(window.buildClouds(18));
+    }, { once: true });
 
-    // 30 فراشة متحركة
-    const flutter = ['#FFD93D', '#FF6B9D', '#A388EE', '#6DD5ED', '#FFC857'];
+    // 30 فراشة متحركة (sprites)
     for (let i = 0; i < 30; i++) {
       const x = rand(-15, 15);
       const z = rand(-25, 5);
       const y = rand(1.5, 3.5);
-      const c = flutter[i % flutter.length];
       const ent = _create('a-entity', {
         position: `${x} ${y} ${z}`,
         animation: `property: position; to: ${x + rand(-2, 2)} ${y + rand(-0.5, 0.5)} ${z + rand(-2, 2)}; dur: ${4000 + Math.random() * 3000}; easing: easeInOutSine; loop: true; dir: alternate`,
       });
-      ent.appendChild(_create('a-sphere', { radius: 0.08, color: c, material: 'shader: flat' }));
+      ent.addEventListener('loaded', () => {
+        if (window.ButterflyFactory) ent.object3D.add(window.ButterflyFactory.build());
+      });
       root.appendChild(ent);
     }
 
-    // غيوم بيضاء بعيدة
-    for (let i = 0; i < 20; i++) {
-      root.appendChild(_create('a-sphere', {
-        position: `${rand(-100, 100)} ${rand(35, 55)} ${rand(-100, 100)}`,
-        radius: rand(5, 12),
-        color: '#ffffff',
-        material: 'opacity: 0.7; flatShading: true',
-      }));
-    }
+    // حقل عشب كثيف حول الكاميرا (InstancedMesh)
+    const grassHost = _create('a-entity');
+    root.appendChild(grassHost);
+    grassHost.addEventListener('loaded', () => {
+      if (window.buildGrassField) window.buildGrassField(grassHost.object3D, (window.QUALITY?window.QUALITY.n(4000):4000), 30);
+    });
 
-    // إضاءة قوية
-    root.appendChild(_create('a-light', { type: 'ambient', color: '#FFF8DC', intensity: '0.7' }));
+    // (السحب الآن تُبنى عبر buildClouds في worldHost أعلاه)
+
+    // إضاءة قوية — الشمس مع ظلال ناعمة
+    root.appendChild(_create('a-light', { type: 'ambient', color: '#FFF8DC', intensity: '0.55' }));
     root.appendChild(_create('a-light', {
-      type: 'directional', color: '#FFE4B5', intensity: '1.2',
-      position: '20 30 -10',
+      type: 'directional', color: '#FFE4B5', intensity: '1.35',
+      position: '30 45 -15',
+      'sun-light': '',
     }));
     root.appendChild(_create('a-light', {
       type: 'hemisphere', color: '#87CEEB', 'ground-color': '#1a5c2a', intensity: '0.5',
@@ -219,11 +221,26 @@ const WorldBuilder = (() => {
     const root = document.getElementById('env-dark');
     if (!root || root.dataset.built === '1') return;
 
-    // أرض متشققة
-    root.appendChild(_create('a-circle', {
-      radius: 150, position: '0 0 0', rotation: '-90 0 0',
-      material: 'color: #1a0505; roughness: 1',
-    }));
+    // أرض متشققة مموّجة + سماء مظلمة + جمرات + جبال سوداء
+    const darkHost = _create('a-entity', {
+      id: 'dark-world-host',
+      'embers-tick': '',
+    });
+    root.appendChild(darkHost);
+    darkHost.addEventListener('loaded', () => {
+      const p = darkHost.object3D;
+      if (window.buildWavyTerrain) {
+        const t = window.buildWavyTerrain(150, 120);
+        // tint dark red
+        t.material.color.set('#4a1a1a');
+        t.material.map = null;
+        p.add(t);
+      }
+      if (window.buildGradientSky) p.add(window.buildGradientSky('#1a0000', '#4a0000'));
+      if (window.buildMountainRing) p.add(window.buildMountainRing(14, 130, true));
+      if (window.buildEmbers) window.buildEmbers(p, (window.QUALITY?window.QUALITY.n(220):220), 30);
+      if (window.buildVolumetricFog) window.buildVolumetricFog(p, { count: (window.QUALITY?window.QUALITY.n(60):60), radius: 35, color: '#3a0808', height: 0.8 });
+    });
 
     // 80 قطعة حطام موزعة
     for (let i = 0; i < 80; i++) {
@@ -278,20 +295,7 @@ const WorldBuilder = (() => {
       root.appendChild(ent);
     }
 
-    // جبال سوداء حول المحيط
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 130;
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
-      const h = rand(25, 50);
-      root.appendChild(_create('a-cone', {
-        position: `${x} ${h / 2} ${z}`,
-        radius: rand(15, 25), height: h,
-        color: '#0a0000',
-        material: 'roughness: 1; flatShading: true',
-      }));
-    }
+    // (الجبال الآن تُبنى عبر buildMountainRing في darkHost أعلاه)
 
     // أضواء حمراء وامضة موزعة
     for (let i = 0; i < 8; i++) {
@@ -316,10 +320,48 @@ const WorldBuilder = (() => {
     root.dataset.built = '1';
   }
 
+  // -------- بيئة المواجهة المحايدة (السينمائية) --------
+  function buildNeutral() {
+    const root = document.getElementById('env-neutral');
+    if (!root || root.dataset.built === '1') return;
+
+    // أرض حجرية مموّجة + سماء ليلية متدرجة + ضباب خفيف
+    const host = _create('a-entity', {
+      id: 'neutral-world-host',
+      'embers-tick': '',
+    });
+    root.appendChild(host);
+    host.addEventListener('loaded', () => {
+      const p = host.object3D;
+      if (window.buildWavyTerrain) {
+        const t = window.buildWavyTerrain(120, 100);
+        t.material.color.set('#1a1a2a');
+        t.material.map = null;
+        t.material.metalness = 0.2;
+        t.material.roughness = 0.9;
+        p.add(t);
+      }
+      if (window.buildGradientSky) p.add(window.buildGradientSky('#0a0a1a', '#2a1a3a'));
+      if (window.buildMountainRing) {
+        const m = window.buildMountainRing(14, 120, true);
+        m.traverse(o => { if (o.isMesh) o.material.color.set('#14141f'); });
+        p.add(m);
+      }
+      // ذرات غبار متصاعدة بدل الجمرات (نفس embers-tick ولكن بألوان باردة)
+      if (window.buildEmbers) {
+        const emb = window.buildEmbers(p, 180, 25);
+        emb.material.color.set('#8899cc');
+      }
+    });
+
+    root.dataset.built = '1';
+  }
+
   function buildAll() {
     buildGarden();
     buildDark();
+    buildNeutral();
   }
 
-  return { buildAll, buildGarden, buildDark };
+  return { buildAll, buildGarden, buildDark, buildNeutral };
 })();

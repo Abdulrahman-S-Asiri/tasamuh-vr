@@ -24,6 +24,8 @@ const VREnv = (() => {
     _setVisible('env-garden', false);
     _setVisible('env-dark', false);
     _setFog('#1a1a25', 0.05);
+    if (window.applyEnvironmentHDRI) window.applyEnvironmentHDRI('neutral');
+    if (window.AudioPro) window.AudioPro.setEnvironment('neutral');
   }
 
   function showSilhouette(v) { _setVisible('vr-silhouette', v); }
@@ -36,6 +38,8 @@ const VREnv = (() => {
     _setVisible('env-garden', true);
     _setVisible('env-dark', false);
     _setFog('#cfe8ff', 0.018);
+    if (window.applyEnvironmentHDRI) window.applyEnvironmentHDRI('garden');
+    if (window.AudioPro) window.AudioPro.setEnvironment('garden');
   }
 
   function showDark() {
@@ -45,6 +49,8 @@ const VREnv = (() => {
     _setVisible('env-garden', false);
     _setVisible('env-dark', true);
     _setFog('#1a0000', 0.06);
+    if (window.applyEnvironmentHDRI) window.applyEnvironmentHDRI('dark');
+    if (window.AudioPro) window.AudioPro.setEnvironment('dark');
   }
 
   function reset() {

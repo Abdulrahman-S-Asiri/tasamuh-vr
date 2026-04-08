@@ -134,8 +134,11 @@
     vr-mode-ui="enabled: true"
     renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.15; highRefreshRate: true; foveationLevel: 1; anisotropy: 16; logarithmicDepthBuffer: true; maxCanvasWidth: 3840; maxCanvasHeight: 2160"
     shadow="type: pcfsoft; autoUpdate: true"
-    hdri-environment
     quality-boost
+    bloom-fx="strength: 0.55; radius: 0.45; threshold: 0.82"
+    assets-boot
+    fog-drift
+    tree-touch
     fog="type: exponential; color: #0a0a0f; density: 0.02"
     loading-screen="enabled: false"
   >
@@ -143,7 +146,7 @@
     <a-sky id="vrSky" color="#0a0a0f"></a-sky>
 
     <!-- الكاميرا + الجهاز كامل -->
-    <a-entity id="vrRig" position="0 1 0">
+    <a-entity id="vrRig" position="0 1 0" run-modifier>
       <a-entity
         id="vrCamera"
         camera
@@ -177,7 +180,8 @@
       <a-entity id="rightHand"
                 oculus-touch-controls="hand: right"
                 laser-controls="hand: right"
-                raycaster="objects: .vr-clickable; far: 30"></a-entity>
+                raycaster="objects: .vr-clickable, .grabbable; far: 30"
+                hand-grab></a-entity>
     </a-entity>
 
     <!-- ===== بيئة محايدة (بداية المواجهة) ===== -->
@@ -206,65 +210,9 @@
               animation="property: rotation; to: -90 360 0; loop: true; dur: 8000"></a-ring>
     </a-entity>
 
-    <!-- ===== بوّابات القرار (4 خيارات في قوس) ===== -->
-    <a-entity id="vr-portals" visible="false">
-      <!-- بوابة العدل -->
-      <a-entity id="portal-just" position="-9 1.7 -8">
-        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#3b82f6"
-                 material="emissive: #1d4ed8; emissiveIntensity: 0.9; metalness: 0.3"
-                 animation="property: rotation; to: 0 360 0; loop: true; dur: 14000"></a-torus>
-        <a-circle class="vr-clickable" radius="1.45" color="#0a1f3b"
-                  material="opacity: 0.5; transparent: true; emissive: #1d4ed8; emissiveIntensity: 0.4"></a-circle>
-        <a-plane position="0 2.6 0" width="4" height="1"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="العدل — اطلب الحق" data-color="#bfdbfe"></a-plane>
-        <a-light type="point" color="#3b82f6" intensity="1.5" distance="8"
-                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
-      </a-entity>
-      <!-- بوابة التسامح -->
-      <a-entity id="portal-forgive" position="-3 1.7 -8">
-        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#22c55e"
-                 material="emissive: #16a34a; emissiveIntensity: 0.9; metalness: 0.3"
-                 animation="property: rotation; to: 0 360 0; loop: true; dur: 12000"></a-torus>
-        <a-circle class="vr-clickable" radius="1.45" color="#0a3b1a"
-                  material="opacity: 0.5; transparent: true; emissive: #16a34a; emissiveIntensity: 0.4"></a-circle>
-        <a-plane id="label-forgive" position="0 2.6 0" width="4" height="1"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="التسامح — اعفُ وسامح" data-color="#bbf7d0"></a-plane>
-        <a-text value="🕊" align="center" position="0 0 0.05"
-                color="#ffffff" width="8"></a-text>
-        <a-light type="point" color="#22c55e" intensity="1.5" distance="8"
-                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
-      </a-entity>
-      <!-- بوابة التجاهل -->
-      <a-entity id="portal-ignore" position="3 1.7 -8">
-        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#94a3b8"
-                 material="emissive: #64748b; emissiveIntensity: 0.9; metalness: 0.3"
-                 animation="property: rotation; to: 0 360 0; loop: true; dur: 16000"></a-torus>
-        <a-circle class="vr-clickable" radius="1.45" color="#1e293b"
-                  material="opacity: 0.5; transparent: true; emissive: #64748b; emissiveIntensity: 0.4"></a-circle>
-        <a-plane position="0 2.6 0" width="4" height="1"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="التجاهل — تجاوز" data-color="#e2e8f0"></a-plane>
-        <a-light type="point" color="#94a3b8" intensity="1.2" distance="8"
-                 animation="property: intensity; from: 0.8; to: 1.6; dur: 1500; loop: true; dir: alternate"></a-light>
-      </a-entity>
-      <!-- بوابة الانتقام -->
-      <a-entity id="portal-revenge" position="9 1.7 -8">
-        <a-torus class="vr-clickable" radius="1.5" radius-tubular="0.08" color="#ef4444"
-                 material="emissive: #b91c1c; emissiveIntensity: 0.9; metalness: 0.3"
-                 animation="property: rotation; to: 0 -360 0; loop: true; dur: 12000"></a-torus>
-        <a-circle class="vr-clickable" radius="1.45" color="#3b0000"
-                  material="opacity: 0.5; transparent: true; emissive: #b91c1c; emissiveIntensity: 0.4"></a-circle>
-        <a-plane id="label-revenge" position="0 2.6 0" width="4" height="1"
-                 material="transparent: true; alphaTest: 0.01; shader: flat" class="ar-label"
-                 data-text="الانتقام — ردّ الإساءة" data-color="#fecaca"></a-plane>
-        <a-text value="⚡" align="center" position="0 0 0.05"
-                color="#ffffff" width="8"></a-text>
-        <a-light type="point" color="#ef4444" intensity="1.5" distance="8"
-                 animation="property: intensity; from: 1; to: 2; dur: 1500; loop: true; dir: alternate"></a-light>
-      </a-entity>
-    </a-entity>
+    <!-- ===== أبواب القرار (4 أبواب طاقة يُعبر منها مشياً) ===== -->
+    <!-- تُملأ ديناميكياً عبر DoorFactory في app.js -->
+    <a-entity id="vr-portals" visible="false"></a-entity>
 
     <!-- ===== بوّابات الجولة الثانية (تُملأ ديناميكياً) ===== -->
     <a-entity id="vr-portals-2" visible="false"></a-entity>
@@ -403,6 +351,11 @@
   <!--                JavaScript                      -->
   <!-- ============================================= -->
   <script src="js/quality.js"></script>
+  <script src="js/realism.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/visuals-pro.js"></script>
+  <script src="js/audio-pro.js"></script>
+  <script src="js/interact-pro.js"></script>
   <script src="js/config.js"></script>
   <script src="js/sounds.js"></script>
   <script src="js/audio.js"></script>
@@ -416,6 +369,7 @@
   <script src="js/npcs.js"></script>
   <script src="js/interactives.js"></script>
   <script src="js/footsteps.js"></script>
+  <script src="js/doors.js"></script>
   <script>
     // رسم النصوص العربية كصور على a-plane (a-text ما يدعم العربية)
     function renderArabicLabels() {

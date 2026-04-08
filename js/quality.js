@@ -24,7 +24,7 @@ AFRAME.registerComponent('quality-boost', {
 
       // Tone mapping already ACES via a-scene renderer attr; reinforce
       r.toneMapping = THREE.ACESFilmicToneMapping;
-      r.toneMappingExposure = 1.15;
+      r.toneMappingExposure = 1.4;
       r.outputColorSpace = THREE.SRGBColorSpace || r.outputColorSpace;
 
       // Max anisotropy on every texture we encounter

@@ -25,7 +25,7 @@ const Npcs = (() => {
   let active = [];
   let lastSpoken = {};
 
-  function _build(list) {
+  function _build(list, isDark) {
     const container = document.getElementById('vr-npcs');
     if (!container) return;
     container.innerHTML = '';
@@ -33,23 +33,37 @@ const Npcs = (() => {
       const e = document.createElement('a-entity');
       e.setAttribute('id', 'npc-' + n.id);
       e.setAttribute('position', `${n.pos.x} ${n.pos.y} ${n.pos.z}`);
-      e.innerHTML = `
-        <a-cylinder height="${n.height}" radius="0.3" color="${n.color}"
-                    material="opacity: 0.85; transparent: true"
-                    position="0 ${n.height/2} 0"></a-cylinder>
-        <a-sphere radius="0.3" color="${n.color}" position="0 ${n.height + 0.25} 0"></a-sphere>
-        <a-light type="point" color="${n.color}" intensity="0.6" distance="3"></a-light>
-      `;
+      // point light halo
+      const light = document.createElement('a-light');
+      light.setAttribute('type', 'point');
+      light.setAttribute('color', n.color);
+      light.setAttribute('intensity', isDark ? 0.4 : 0.6);
+      light.setAttribute('distance', 4);
+      light.setAttribute('position', `0 ${n.height * 0.7} 0`);
+      e.appendChild(light);
       e._npc = n;
       container.appendChild(e);
+      // Attach humanoid mesh once entity is ready
+      e.addEventListener('loaded', () => {
+        if (window.NpcFactory) {
+          const mesh = window.NpcFactory.build({
+            height: n.height,
+            color: n.color,
+            dark: isDark,
+            skin: isDark ? '#4a3333' : '#e8c9a0'
+          });
+          e.object3D.add(mesh);
+          e._mesh = mesh;
+        }
+      });
       active.push(e);
     });
   }
 
   function spawn(env) {
     clear();
-    if (env === 'garden') _build(GARDEN_NPCS);
-    else if (env === 'dark') _build(DARK_NPCS);
+    if (env === 'garden') _build(GARDEN_NPCS, false);
+    else if (env === 'dark') _build(DARK_NPCS, true);
     _startProximity();
   }
 
@@ -68,7 +82,13 @@ const Npcs = (() => {
       if (!cam.object3D) { raf = requestAnimationFrame(tick); return; }
       const cp = cam.object3D.getWorldPosition(new THREE.Vector3());
       const now = Date.now();
+      const ts = now * 0.002;
       active.forEach(e => {
+        if (e._mesh) {
+          e._mesh.position.y = Math.sin(ts + (e._mesh.userData.idlePhase||0)) * 0.02;
+          const dir = new THREE.Vector3().subVectors(cp, e.object3D.position);
+          e._mesh.rotation.y = Math.atan2(dir.x, dir.z);
+        }
         const np = e.object3D.getWorldPosition(new THREE.Vector3());
         const d = cp.distanceTo(np);
         const id = e._npc.id;

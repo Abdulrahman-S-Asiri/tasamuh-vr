@@ -187,6 +187,13 @@ const App = (() => {
     state.phase = 'intermediate';
     if (VREnv.showPortals) VREnv.showPortals(false);
 
+    // إعادة التمركز (Re-center) ليعود اللاعب لنقطة البداية للمشي مجدداً للبوابات الجديدة
+    const rig = document.getElementById('vrRig');
+    if (rig) {
+      rig.setAttribute('position', '0 1 0');
+      rig.setAttribute('rotation', '0 0 0');
+    }
+
     const tree = CONFIG.decisionTree[choice];
     const hud = document.getElementById('vrHud');
     const txt = document.getElementById('vrHudText');

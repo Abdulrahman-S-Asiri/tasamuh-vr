@@ -379,23 +379,29 @@
       document.querySelectorAll('.ar-label').forEach((el, i) => {
         const text = el.dataset.text || '';
         const color = el.dataset.color || '#ffffff';
-        const c = document.createElement('canvas');
-        c.width = 2048; c.height = 512;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(0,0,c.width,c.height);
-        ctx.font = 'bold 176px "Segoe UI","Tahoma",Arial,sans-serif';
-        ctx.fillStyle = color;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, c.width/2, c.height/2);
-        const id = 'arlabel_' + i;
-        const img = document.createElement('img');
-        img.id = id;
-        img.src = c.toDataURL();
-        let assets = document.querySelector('a-assets');
-        if (!assets) { assets = document.createElement('a-assets'); document.querySelector('a-scene').prepend(assets); }
-        assets.appendChild(img);
+        // Create unique ID based on the text to avoid image cache collision
+        const textHash = Math.abs(text.split('').reduce((a,b)=>((a<<5)-a)+b.charCodeAt(0),0));
+        const id = 'arlabel_' + textHash;
+        
+        let img = document.getElementById(id);
+        if (!img) {
+          const c = document.createElement('canvas');
+          c.width = 2048; c.height = 512;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(0,0,c.width,c.height);
+          ctx.font = 'bold 176px "Segoe UI","Tahoma",Arial,sans-serif';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, c.width/2, c.height/2);
+          img = document.createElement('img');
+          img.id = id;
+          img.src = c.toDataURL();
+          let assets = document.querySelector('a-assets');
+          if (!assets) { assets = document.createElement('a-assets'); document.querySelector('a-scene').prepend(assets); }
+          assets.appendChild(img);
+        }
         el.setAttribute('material', `src: #${id}; transparent: true; shader: flat; side: double`);
       });
     }

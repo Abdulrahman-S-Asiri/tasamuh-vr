@@ -180,22 +180,86 @@ const App = (() => {
     });
   }
 
-  // ===== الاختيار الأول → النتيجة النهائية (دايركت) =====
+  // ===== الاختيار الأول → جولة وسيطة → جولة 2 =====
   function makeChoice1(choice) {
     _debug('choice1: ' + choice);
     state.choice1 = choice;
-    state.phase = 'result';
+    state.phase = 'intermediate';
     if (VREnv.showPortals) VREnv.showPortals(false);
 
     const tree = CONFIG.decisionTree[choice];
+    const hud = document.getElementById('vrHud');
+    const txt = document.getElementById('vrHudText');
+    if (hud && txt && tree) {
+      txt.textContent = tree.intro;
+      hud.classList.add('active');
+    }
+    Speech.speak(tree.intro, () => setTimeout(() => showDecision2(choice), 600));
+    setTimeout(() => showDecision2(choice), 4500); // failsafe
+  }
+
+  // ===== القرار - الجولة 2 (أبواب فرعية) =====
+  let _decision2Shown = false;
+  function showDecision2(parent) {
+    if (_decision2Shown) return;
+    _decision2Shown = true;
+    state.phase = 'decision2';
+
+    const tree = CONFIG.decisionTree[parent];
+    if (!tree) return;
+    const container = document.getElementById('vr-portals-2');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const positions = tree.sub.length === 1
+      ? [{x:0, z:-10}]
+      : [{x:-3, z:-10},{x:3, z:-10}];
+    tree.sub.forEach((opt, i) => {
+      const p = positions[i] || positions[0];
+      const ent = window.DoorFactory
+        ? window.DoorFactory.build({
+            id: opt.id,
+            color: tree.color,
+            label: opt.title,
+            desc: opt.desc,
+            width: 1.7, height: 2.9,
+            position: { x: p.x, y: 0, z: p.z }
+          })
+        : document.createElement('a-entity');
+      ent.removeAttribute('id'); // avoid conflict with decision1 ids
+      const cb = () => makeChoice2(parent, opt.id);
+      ent.addEventListener('walkthrough', cb, { once: true });
+      ent.addEventListener('click', cb, { once: true });
+      container.appendChild(ent);
+    });
+    container.setAttribute('visible', 'true');
+    if (window.renderArabicLabels) setTimeout(window.renderArabicLabels, 100);
+
+    const hud = document.getElementById('vrHud');
+    const txt = document.getElementById('vrHudText');
+    if (hud && txt) {
+      txt.textContent = tree.intro + ' — اختر طريقتك';
+      hud.classList.add('active');
+    }
+  }
+
+  // ===== الاختيار الثاني → النتيجة النهائية =====
+  function makeChoice2(parent, subId) {
+    _debug('choice2: ' + parent + '/' + subId);
+    state.choice2 = subId;
+    const container = document.getElementById('vr-portals-2');
+    if (container) container.setAttribute('visible', 'false');
+    const tree = CONFIG.decisionTree[parent];
+    const sub = tree.sub.find(s => s.id === subId);
+    
     const hud = document.getElementById('vrHud');
     if (hud) hud.classList.remove('active');
 
     const result = {
       icon: tree.icon,
-      title: tree.title,
-      quote: tree.quote,
-      message: tree.message,
+      title: tree.title + ' — ' + sub.title,
+      quote: sub.quote,
+      message: sub.message,
       env: tree.env,
     };
     _renderResult(result);
@@ -269,6 +333,7 @@ const App = (() => {
   // ===== إعادة التجربة =====
   function restart() {
     state = { gender: null, phase: 'intro', choice1: null, choice2: null };
+    _decision2Shown = false;
     const c2 = document.getElementById('vr-portals-2');
     if (c2) { c2.innerHTML = ''; c2.setAttribute('visible','false'); }
     if (typeof Npcs !== 'undefined') Npcs.clear();

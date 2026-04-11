@@ -8,7 +8,7 @@ const App = (() => {
   let state = {
     gender: null,       // 'male' | 'female'
     phase: 'intro',     // المرحلة الحالية
-    choice1: null,      // 'forgive' | 'revenge' | 'just' | 'ignore'
+    choice1: null,      // 'forgive' | 'revenge'
     choice2: null,      // الخيار الفرعي
   };
 
@@ -134,10 +134,8 @@ const App = (() => {
 
   // ===== القرار - الجولة 1 (4 أبواب طاقة) =====
   const DOOR1_CONFIG = [
-    { id: 'just',    color: '#3b82f6', label: 'العدل — اطلب الحق',   pos: { x: -6, y: 0, z: -10 } },
-    { id: 'forgive', color: '#22c55e', label: 'التسامح — اعفُ وسامح', pos: { x: -2, y: 0, z: -10 } },
-    { id: 'ignore',  color: '#94a3b8', label: 'التجاهل — تجاوز',     pos: { x:  2, y: 0, z: -10 } },
-    { id: 'revenge', color: '#ef4444', label: 'الانتقام — ردّ الإساءة', pos: { x:  6, y: 0, z: -10 } },
+    { id: 'forgive', color: '#22c55e', label: 'التسامح — اعفُ وسامح', pos: { x: -3, y: 0, z: -10 } },
+    { id: 'revenge', color: '#ef4444', label: 'الانتقام — ردّ الإساءة', pos: { x:  3, y: 0, z: -10 } },
   ];
 
   function _buildDecision1Doors() {
@@ -213,7 +211,9 @@ const App = (() => {
     if (!container) return;
     container.innerHTML = '';
 
-    const positions = [{x:-4, z:-10},{x:0, z:-11},{x:4, z:-10}];
+    const positions = tree.sub.length === 1
+      ? [{x:0, z:-10}]
+      : [{x:-3, z:-10},{x:3, z:-10}];
     tree.sub.forEach((opt, i) => {
       const p = positions[i] || positions[0];
       const ent = window.DoorFactory

@@ -62,6 +62,13 @@ const VREnv = (() => {
     if (garden) garden.setAttribute('visible', 'false');
     if (dark) dark.setAttribute('visible', 'false');
     _setFog('#0a0a0f', 0.02);
+
+    // إرجاع اللاعب لنقطة البداية الأساسية
+    const rig = document.getElementById('vrRig');
+    if (rig) {
+      rig.setAttribute('position', '0 1 0');
+      rig.setAttribute('rotation', '0 0 0');
+    }
   }
 
   // --- مزامنة AudioListener مع كاميرا A-Frame كل إطار ---

@@ -49,20 +49,28 @@ tasamuh-vr/
 │   ├── animations.css      ← الحركات
 │   └── responsive.css      ← التوافق
 ├── js/
+│   ├── quality.js          ← الجودة المرئية وتكوين البيئة
+│   ├── realism.js          ← الواقعية والفيزياء
+│   ├── assets.js           ← إدارة الأصول والموارد
+│   ├── visuals-pro.js      ← التأثيرات البصرية المتقدمة
+│   ├── audio-pro.js        ← تحسينات الصوت المكاني
+│   ├── interact-pro.js     ← تفاعلات متقدمة مع العناصر
+│   ├── weather.js          ← الطقس (مطر، رياح، غيوم)
 │   ├── config.js           ← ⭐ النصوص + شجرة القرارات
-│   ├── app.js              ← المتحكم الرئيسي + التدفق
-│   ├── audio.js            ← Web Audio + HRTF spatial
 │   ├── sounds.js           ← مشغّل ملفات الأصوات المكاني
-│   ├── speech.js           ← نطق عربي بشري + TTS
+│   ├── audio.js            ← Web Audio + HRTF spatial
 │   ├── world-builder.js    ← بناء الحديقة والظلام إجرائياً
-│   ├── vr-environment.js   ← تبديل البيئات + مزامنة Listener
 │   ├── movement.js         ← Joystick + WASD + camera-aware
+│   ├── particles.js        ← الجسيمات والتأثيرات
+│   ├── typewriter.js       ← الكتابة حرف بحرف
+│   ├── speech.js           ← نطق عربي بشري + TTS
+│   ├── vr-environment.js   ← تبديل البيئات + مزامنة Listener
+│   ├── phases.js           ← منطق المراحل
 │   ├── npcs.js             ← شخصيات NPC + proximity trigger
 │   ├── interactives.js     ← العناصر القابلة للتفاعل
 │   ├── footsteps.js        ← خطوات تتبع حركة الكاميرا
-│   ├── particles.js        ← الجسيمات والتأثيرات
-│   ├── typewriter.js       ← الكتابة حرف بحرف
-│   └── phases.js           ← منطق المراحل
+│   ├── doors.js            ← أبواب ومداخل المراحل
+│   └── app.js              ← المتحكم الرئيسي + التدفق
 ├── assets/
 │   ├── sounds/             ← 11 ملف صوت محيطي (طيور، رياح، رعد…)
 │   ├── voices/             ← ملفات نطق عربي بشري

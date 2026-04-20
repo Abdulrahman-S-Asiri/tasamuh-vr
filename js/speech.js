@@ -19,9 +19,14 @@
 const Speech = (() => {
 
   let voicesLoaded = false;
-  let textToFile = {}; // map: نص → مسار ملف
+  let textToFile = {}; // map: نص → [قائمة مسارات مرشّحة بالأولوية]
   let currentAudio = null;
   const available = {}; // path → bool
+
+  // يجرّب كلا الامتدادين (.m4a و .mp3) لكل اسم أساسي
+  function _variants(basePathNoExt) {
+    return [basePathNoExt + '.m4a', basePathNoExt + '.mp3'];
+  }
 
   function _probe(path) {
     return new Promise((resolve) => {
@@ -33,33 +38,45 @@ const Speech = (() => {
     });
   }
 
+  // يختار أول ملف متاح من قائمة مرشّحين، أو null لو ما فيه شي
+  function _pickAvailable(candidates) {
+    if (!candidates) return null;
+    if (typeof candidates === 'string') return available[candidates] ? candidates : null;
+    for (const p of candidates) {
+      if (available[p]) return p;
+    }
+    return null;
+  }
+
   function _buildMap() {
-    // اربط كل جملة في CONFIG بملفها
+    // اربط كل جملة في CONFIG بقائمة مرشّحين (m4a ثم mp3)
     const m = CONFIG.text.confrontation_male || [];
     const f = CONFIG.text.confrontation_female || [];
-    m.forEach((line, i) => { textToFile[line] = `assets/voices/male/${i + 1}.m4a`; });
-    f.forEach((line, i) => { textToFile[line] = `assets/voices/female/${i + 1}.m4a`; });
+    m.forEach((line, i) => { textToFile[line] = _variants(`assets/voices/male/${i + 1}`); });
+    f.forEach((line, i) => { textToFile[line] = _variants(`assets/voices/female/${i + 1}`); });
     if (CONFIG.text.closingVoice) {
-      textToFile[CONFIG.text.closingVoice] = 'assets/voices/closing.m4a';
+      textToFile[CONFIG.text.closingVoice] = _variants('assets/voices/closing');
     }
     // intro بعد دخول البوابة الأولى
     const tree = (CONFIG.decisionTree || {});
     if (tree.forgive && tree.forgive.intro) {
-      textToFile[tree.forgive.intro] = 'assets/voices/forgive_intro.m4a';
+      textToFile[tree.forgive.intro] = _variants('assets/voices/forgive_intro');
     }
     if (tree.revenge && tree.revenge.intro) {
-      textToFile[tree.revenge.intro] = 'assets/voices/revenge_intro.m4a';
+      textToFile[tree.revenge.intro] = _variants('assets/voices/revenge_intro');
     }
-    // رسائل القرار الفرعي (لو قررت تنطقها مستقبلاً، الملفات جاهزة)
+    // رسائل القرار الفرعي
     ['forgive', 'revenge'].forEach(key => {
       const node = tree[key];
       if (!node || !node.sub) return;
       node.sub.forEach(s => {
-        if (s.message) textToFile[s.message] = `assets/voices/${key}_${s.id}.m4a`;
+        if (s.message) textToFile[s.message] = _variants(`assets/voices/${key}_${s.id}`);
       });
     });
-    // افحص كل الملفات بصمت
-    Object.values(textToFile).forEach(p => _probe(p));
+    // افحص كل المرشّحين بصمت
+    Object.values(textToFile).forEach(paths => {
+      (Array.isArray(paths) ? paths : [paths]).forEach(p => _probe(p));
+    });
   }
 
   function init() {
@@ -168,8 +185,8 @@ const Speech = (() => {
     stop();
     opts = opts || {};
 
-    const file = textToFile[text];
-    if (file && available[file]) {
+    const file = _pickAvailable(textToFile[text]);
+    if (file) {
       _playFile(file, onEnd, opts.position);
       return;
     }

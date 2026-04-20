@@ -57,23 +57,30 @@ const Speech = (() => {
     _buildMap();
   }
 
+  // boost موحّد للتسجيلات البشرية (بعضها منخفض المستوى)
+  // female voices recorded quietly; boost via GainNode + Compressor to keep it safe
+  const VOICE_BOOST = 3.5;
+
   function _playFile(path, onEnd, position) {
     try {
       currentAudio = new window.Audio(path);
       currentAudio.volume = 1.0;
+      currentAudio.crossOrigin = 'anonymous';
       currentAudio.addEventListener('ended', () => { if (onEnd) onEnd(); }, { once: true });
       currentAudio.addEventListener('error', () => _fallbackTTS(null, onEnd), { once: true });
 
-      // إذا تم تمرير موقع مكاني، اربط بـ PannerNode
-      if (position && typeof Audio !== 'undefined' && Audio.init) {
-        try {
-          Audio.init();
-          // الوصول إلى ctx الداخلي عبر createMediaElementSource من ctx مشترك
-          // نستخدم نسخة جديدة من AudioContext إذا لزم
-          const ctx = window._sharedAudioCtx || (window._sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
-          if (ctx.state === 'suspended') ctx.resume();
-          const src = ctx.createMediaElementSource(currentAudio);
-          const gain = ctx.createGain(); gain.gain.value = 1.0;
+      // دائماً مرّر عبر Web Audio لتضخيم الصوت (boost) — حتى بدون موقع مكاني
+      try {
+        const ctx = window._sharedAudioCtx || (window._sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
+        if (ctx.state === 'suspended') ctx.resume();
+        const src = ctx.createMediaElementSource(currentAudio);
+        const gain = ctx.createGain(); gain.gain.value = VOICE_BOOST;
+        // Compressor يمنع التشويه عند رفع الـ gain
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 20;
+        comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
+
+        if (position) {
           const panner = ctx.createPanner();
           try { panner.panningModel = 'HRTF'; } catch (e) { panner.panningModel = 'equalpower'; }
           panner.distanceModel = 'inverse';
@@ -86,8 +93,12 @@ const Speech = (() => {
           } else if (panner.setPosition) {
             panner.setPosition(position.x, position.y, position.z);
           }
-          src.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
-        } catch (e) { /* بدون مكانية لو فشل */ }
+          src.connect(gain); gain.connect(comp); comp.connect(panner); panner.connect(ctx.destination);
+        } else {
+          src.connect(gain); gain.connect(comp); comp.connect(ctx.destination);
+        }
+      } catch (e) {
+        // إذا فشل Web Audio (مثلاً، src مُستخدم من قبل) — تشغيل عادي بدون boost
       }
 
       currentAudio.play().catch(() => _fallbackTTS(null, onEnd));

@@ -1,14 +1,14 @@
 /* ============================================= */
 /*  نظام النطق - ملفات صوت إنسان حقيقي + TTS احتياطي */
 /*                                                     */
-/*  ضع تسجيلات MP3 في:                                 */
-/*    assets/voices/male/1.mp3   (الجملة الأولى ذكر)  */
-/*    assets/voices/male/2.mp3                         */
-/*    assets/voices/male/3.mp3                         */
-/*    assets/voices/female/1.mp3 (الجملة الأولى أنثى) */
-/*    assets/voices/female/2.mp3                       */
-/*    assets/voices/female/3.mp3                       */
-/*    assets/voices/closing.mp3  (الخاتمة)            */
+/*  ضع تسجيلات M4A في:                                 */
+/*    assets/voices/male/1.m4a   (الجملة الأولى ذكر)  */
+/*    assets/voices/male/2.m4a                         */
+/*    assets/voices/male/3.m4a                         */
+/*    assets/voices/female/1.m4a (الجملة الأولى أنثى) */
+/*    assets/voices/female/2.m4a                       */
+/*    assets/voices/female/3.m4a                       */
+/*    assets/voices/closing.m4a  (الخاتمة)            */
 /*                                                     */
 /*  مصادر صوت بشري واقعي (مدفوع/مجاني):              */
 /*  - ElevenLabs (أفضل صوت عربي اصطناعي)              */
@@ -37,10 +37,10 @@ const Speech = (() => {
     // اربط كل جملة في CONFIG بملفها
     const m = CONFIG.text.confrontation_male || [];
     const f = CONFIG.text.confrontation_female || [];
-    m.forEach((line, i) => { textToFile[line] = `assets/voices/male/${i + 1}.mp3`; });
-    f.forEach((line, i) => { textToFile[line] = `assets/voices/female/${i + 1}.mp3`; });
+    m.forEach((line, i) => { textToFile[line] = `assets/voices/male/${i + 1}.m4a`; });
+    f.forEach((line, i) => { textToFile[line] = `assets/voices/female/${i + 1}.m4a`; });
     if (CONFIG.text.closingVoice) {
-      textToFile[CONFIG.text.closingVoice] = 'assets/voices/closing.mp3';
+      textToFile[CONFIG.text.closingVoice] = 'assets/voices/closing.m4a';
     }
     // افحص كل الملفات بصمت
     Object.values(textToFile).forEach(p => _probe(p));

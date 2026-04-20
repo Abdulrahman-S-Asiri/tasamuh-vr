@@ -19,7 +19,7 @@
 
 ---
 
-## 🚀 التشغيل
+## 🚀 التشغيل المحلي
 
 ```bash
 # Python
@@ -33,6 +33,32 @@ npx serve .
 - 💻 الكمبيوتر: `http://localhost:8080`
 - 📱 الجوال (نفس الواي‌فاي): `http://[IP-الكمبيوتر]:8080`
 - 🥽 Meta Quest 3S: نفس الرابط من متصفح Quest، ثم اضغط زر Enter VR
+
+---
+
+## 🌐 النشر (Deploy)
+
+المشروع موقع **ثابت (Static)** بدون build step — يشتغل على أي استضافة ثابتة مباشرة.
+
+### GitHub Pages
+1. ارفع المشروع لمستودع GitHub.
+2. **Settings → Pages → Source** → اختر `main` branch + `/ (root)`.
+3. افتح الرابط: `https://<username>.github.io/<repo>/`.
+
+### Netlify (السحب والإفلات)
+- روح **https://app.netlify.com/drop** واسحب مجلد المشروع كامل.
+- أو اربط مستودع GitHub → Netlify يكتشف الإعدادات تلقائياً (بدون build command، publish directory = `.`).
+
+### Vercel
+```bash
+npx vercel
+```
+اقبل الإعدادات الافتراضية (Static site, no build).
+
+### Cloudflare Pages
+- اربط المستودع، اترك Build command فاضي، Build output = `/`.
+
+> ⚠️ **ملاحظة مهمة لـ VR:** Meta Quest يتطلب **HTTPS** لتفعيل WebXR. كل الخدمات أعلاه توفّره افتراضياً.
 
 ---
 
@@ -114,17 +140,17 @@ tasamuh-vr/
 ```
 
 ### أضف ملفات صوت بشرية
-ضع تسجيلاتك في:
+ضع تسجيلاتك في (الصيغة المدعومة: `.m4a` / AAC):
 ```
-assets/voices/male/1.mp3   ← الجملة الأولى ذكر
-assets/voices/male/2.mp3
-assets/voices/male/3.mp3
-assets/voices/female/1.mp3
-assets/voices/female/2.mp3
-assets/voices/female/3.mp3
-assets/voices/closing.mp3
+assets/voices/male/1.m4a   ← الجملة الأولى ذكر
+assets/voices/male/2.m4a
+assets/voices/male/3.m4a
+assets/voices/female/1.m4a
+assets/voices/female/2.m4a
+assets/voices/female/3.m4a
+assets/voices/closing.m4a
 ```
-المشروع يكتشفها تلقائياً ويستخدم HRTF للصوت المكاني.
+المشروع يكتشفها تلقائياً ويستخدم HRTF للصوت المكاني. إذا فُقد أي ملف، يرجع تلقائياً لنطق Web Speech.
 
 **مصادر مقترحة:** ElevenLabs (أفضل صوت عربي AI)، Fiverr، أو سجّل بنفسك.
 

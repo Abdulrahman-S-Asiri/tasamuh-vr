@@ -57,9 +57,9 @@ const Speech = (() => {
     _buildMap();
   }
 
-  // boost عالي للتسجيلات البشرية — بعض الملفات مسجّلة بمستوى منخفض جداً
-  const VOICE_PRE_GAIN = 10.0;   // تضخيم أولي
-  const VOICE_POST_GAIN = 1.8;   // makeup gain بعد الـ compressor
+  // boost قوي جداً للتسجيلات البشرية المنخفضة
+  const VOICE_PRE_GAIN = 25.0;   // تضخيم أولي شديد
+  const VOICE_POST_GAIN = 3.0;   // makeup gain بعد الـ limiter
 
   function _playFile(path, onEnd, position) {
     try {

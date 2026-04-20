@@ -57,9 +57,9 @@ const Speech = (() => {
     _buildMap();
   }
 
-  // boost موحّد للتسجيلات البشرية (بعضها منخفض المستوى)
-  // female voices recorded quietly; boost via GainNode + Compressor to keep it safe
-  const VOICE_BOOST = 3.5;
+  // boost عالي للتسجيلات البشرية — بعض الملفات مسجّلة بمستوى منخفض جداً
+  const VOICE_PRE_GAIN = 10.0;   // تضخيم أولي
+  const VOICE_POST_GAIN = 1.8;   // makeup gain بعد الـ compressor
 
   function _playFile(path, onEnd, position) {
     try {
@@ -69,16 +69,23 @@ const Speech = (() => {
       currentAudio.addEventListener('ended', () => { if (onEnd) onEnd(); }, { once: true });
       currentAudio.addEventListener('error', () => _fallbackTTS(null, onEnd), { once: true });
 
-      // دائماً مرّر عبر Web Audio لتضخيم الصوت (boost) — حتى بدون موقع مكاني
+      // دائماً مرّر عبر Web Audio لتضخيم الصوت بقوة — حتى بدون موقع مكاني
+      let webAudioOK = false;
       try {
         const ctx = window._sharedAudioCtx || (window._sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
         if (ctx.state === 'suspended') ctx.resume();
         const src = ctx.createMediaElementSource(currentAudio);
-        const gain = ctx.createGain(); gain.gain.value = VOICE_BOOST;
-        // Compressor يمنع التشويه عند رفع الـ gain
+
+        // preGain: تضخيم شديد للتسجيلات الهادئة
+        const preGain = ctx.createGain(); preGain.gain.value = VOICE_PRE_GAIN;
+        // limiter: يمنع التشويه بعد التضخيم (حد أقصى، بدون ضغط قاسي)
         const comp = ctx.createDynamicsCompressor();
-        comp.threshold.value = -18; comp.knee.value = 20;
-        comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
+        comp.threshold.value = -6; comp.knee.value = 6;
+        comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.1;
+        // postGain: makeup — يعوّض ما يأكله الـ limiter
+        const postGain = ctx.createGain(); postGain.gain.value = VOICE_POST_GAIN;
+
+        src.connect(preGain); preGain.connect(comp); comp.connect(postGain);
 
         if (position) {
           const panner = ctx.createPanner();
@@ -93,14 +100,16 @@ const Speech = (() => {
           } else if (panner.setPosition) {
             panner.setPosition(position.x, position.y, position.z);
           }
-          src.connect(gain); gain.connect(comp); comp.connect(panner); panner.connect(ctx.destination);
+          postGain.connect(panner); panner.connect(ctx.destination);
         } else {
-          src.connect(gain); gain.connect(comp); comp.connect(ctx.destination);
+          postGain.connect(ctx.destination);
         }
+        webAudioOK = true;
       } catch (e) {
-        // إذا فشل Web Audio (مثلاً، src مُستخدم من قبل) — تشغيل عادي بدون boost
+        // إذا فشل Web Audio (نادراً) — نرجع لتشغيل بدون تضخيم
       }
 
+      // لو Web Audio ما اشتغل، احتياط: نشغل مباشرة بـ volume 1.0
       currentAudio.play().catch(() => _fallbackTTS(null, onEnd));
       return true;
     } catch (e) {

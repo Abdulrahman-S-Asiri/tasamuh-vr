@@ -42,6 +42,22 @@ const Speech = (() => {
     if (CONFIG.text.closingVoice) {
       textToFile[CONFIG.text.closingVoice] = 'assets/voices/closing.m4a';
     }
+    // intro بعد دخول البوابة الأولى
+    const tree = (CONFIG.decisionTree || {});
+    if (tree.forgive && tree.forgive.intro) {
+      textToFile[tree.forgive.intro] = 'assets/voices/forgive_intro.m4a';
+    }
+    if (tree.revenge && tree.revenge.intro) {
+      textToFile[tree.revenge.intro] = 'assets/voices/revenge_intro.m4a';
+    }
+    // رسائل القرار الفرعي (لو قررت تنطقها مستقبلاً، الملفات جاهزة)
+    ['forgive', 'revenge'].forEach(key => {
+      const node = tree[key];
+      if (!node || !node.sub) return;
+      node.sub.forEach(s => {
+        if (s.message) textToFile[s.message] = `assets/voices/${key}_${s.id}.m4a`;
+      });
+    });
     // افحص كل الملفات بصمت
     Object.values(textToFile).forEach(p => _probe(p));
   }

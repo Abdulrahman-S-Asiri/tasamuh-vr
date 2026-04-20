@@ -90,9 +90,14 @@ const Speech = (() => {
     _buildMap();
   }
 
-  // boost قوي جداً للتسجيلات البشرية المنخفضة
-  const VOICE_PRE_GAIN = 25.0;   // تضخيم أولي شديد
-  const VOICE_POST_GAIN = 3.0;   // makeup gain بعد الـ limiter
+  // boost لكل ملف — female القديمة ضعيفة، ElevenLabs طبيعية
+  // نختار التضخيم حسب المسار
+  function _gainFor(path) {
+    // الملفات الأنثوية القديمة (.m4a) كانت ضعيفة جداً — تحتاج تضخيم عالي
+    if (/\/female\/\d+\.m4a$/.test(path)) return { pre: 12.0, post: 1.5 };
+    // باقي الملفات (ElevenLabs MP3 أو ملفات طبيعية المستوى) — تضخيم خفيف
+    return { pre: 2.0, post: 1.2 };
+  }
 
   function _playFile(path, onEnd, position) {
     try {
@@ -109,14 +114,15 @@ const Speech = (() => {
         if (ctx.state === 'suspended') ctx.resume();
         const src = ctx.createMediaElementSource(currentAudio);
 
-        // preGain: تضخيم شديد للتسجيلات الهادئة
-        const preGain = ctx.createGain(); preGain.gain.value = VOICE_PRE_GAIN;
-        // limiter: يمنع التشويه بعد التضخيم (حد أقصى، بدون ضغط قاسي)
+        const g = _gainFor(path);
+        // preGain: تضخيم أولي حسب الملف
+        const preGain = ctx.createGain(); preGain.gain.value = g.pre;
+        // limiter ناعم: يمسك الذُرى فقط بدون تشويه
         const comp = ctx.createDynamicsCompressor();
-        comp.threshold.value = -6; comp.knee.value = 6;
-        comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.1;
-        // postGain: makeup — يعوّض ما يأكله الـ limiter
-        const postGain = ctx.createGain(); postGain.gain.value = VOICE_POST_GAIN;
+        comp.threshold.value = -3; comp.knee.value = 4;
+        comp.ratio.value = 8; comp.attack.value = 0.005; comp.release.value = 0.2;
+        // postGain: makeup خفيف
+        const postGain = ctx.createGain(); postGain.gain.value = g.post;
 
         src.connect(preGain); preGain.connect(comp); comp.connect(postGain);
 

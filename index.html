@@ -437,6 +437,7 @@
         { UnrealBloomPass },
         { SSAOPass },
         { ShaderPass },
+        waterMod,
       ] = await Promise.all([
         import(BASE + 'loaders/RGBELoader.js'),
         import(BASE + 'postprocessing/EffectComposer.js'),
@@ -444,10 +445,12 @@
         import(BASE + 'postprocessing/UnrealBloomPass.js'),
         import(BASE + 'postprocessing/SSAOPass.js'),
         import(BASE + 'postprocessing/ShaderPass.js'),
+        import(BASE + 'objects/Water2.js').catch(() => ({})),
       ]);
       window._RGBELoader = RGBELoader;
       window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
-      console.log('[Pro] Module bridge ready ✓');
+      if (waterMod && waterMod.Water) window._WaterClass = waterMod.Water;
+      console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, ')');
     `;
     document.head.appendChild(mod);
 
@@ -458,11 +461,16 @@
 
     var s2 = document.createElement('script');
     s2.src = 'js/pro-postfx.js';
-    s2.onload = function() {
+    document.body.appendChild(s2);
+
+    var s3 = document.createElement('script');
+    s3.src = 'js/pro-environment.js';
+    s3.onload = function() {
       ProGraphics.init();
       ProPostFX.init(document.querySelector('a-scene'));
+      ProEnvironment.init();
     };
-    document.body.appendChild(s2);
+    document.body.appendChild(s3);
   })();
   </script>
 

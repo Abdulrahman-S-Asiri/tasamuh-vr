@@ -409,5 +409,40 @@
   </script>
   <script src="js/app.js"></script>
 
+  <!-- ============================================= -->
+  <!--  Pro Graphics — activated by ?pro=1 only      -->
+  <!--  Safe: nothing below runs without that flag   -->
+  <!-- ============================================= -->
+  <script>
+  (function() {
+    if (!new URLSearchParams(location.search).has('pro')) return;
+
+    // Mark <html> so pro-graphics.css selectors activate
+    document.documentElement.classList.add('pro-enabled');
+
+    // Load pro CSS
+    var lnk = document.createElement('link');
+    lnk.rel = 'stylesheet'; lnk.href = 'css/pro-graphics.css';
+    document.head.appendChild(lnk);
+
+    // Bridge: load RGBELoader as ES module → expose as window._RGBELoader
+    var mod = document.createElement('script');
+    mod.type = 'module';
+    mod.textContent = [
+      "import { RGBELoader } from",
+      "'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/RGBELoader.js';",
+      "window._RGBELoader = RGBELoader;",
+      "console.log('[Pro] RGBELoader ready ✓');"
+    ].join(' ');
+    document.head.appendChild(mod);
+
+    // Load pro-graphics.js and init
+    var s = document.createElement('script');
+    s.src = 'js/pro-graphics.js';
+    s.onload = function() { ProGraphics.init(); };
+    document.body.appendChild(s);
+  })();
+  </script>
+
 </body>
 </html>

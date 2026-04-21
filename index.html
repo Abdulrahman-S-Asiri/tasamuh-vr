@@ -475,14 +475,19 @@
 
     var s5 = document.createElement('script');
     s5.src = 'js/pro-particles.js';
-    s5.onload = function() {
+    document.body.appendChild(s5);
+
+    var s6 = document.createElement('script');
+    s6.src = 'js/pro-performance.js';
+    s6.onload = function() {
       ProGraphics.init();
       ProPostFX.init(document.querySelector('a-scene'));
       ProEnvironment.init();
       ProCharacters.init();
       ProParticles.init();
+      ProPerformance.init();
     };
-    document.body.appendChild(s5);
+    document.body.appendChild(s6);
   })();
   </script>
 

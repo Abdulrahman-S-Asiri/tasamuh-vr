@@ -471,13 +471,18 @@
 
     var s4 = document.createElement('script');
     s4.src = 'js/pro-characters.js';
-    s4.onload = function() {
+    document.body.appendChild(s4);
+
+    var s5 = document.createElement('script');
+    s5.src = 'js/pro-particles.js';
+    s5.onload = function() {
       ProGraphics.init();
       ProPostFX.init(document.querySelector('a-scene'));
       ProEnvironment.init();
       ProCharacters.init();
+      ProParticles.init();
     };
-    document.body.appendChild(s4);
+    document.body.appendChild(s5);
   })();
   </script>
 

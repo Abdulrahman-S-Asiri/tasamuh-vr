@@ -446,11 +446,13 @@
         import(BASE + 'postprocessing/SSAOPass.js'),
         import(BASE + 'postprocessing/ShaderPass.js'),
         import(BASE + 'objects/Water2.js').catch(() => ({})),
+        import(BASE + 'loaders/GLTFLoader.js').catch(() => ({})),
       ]);
       window._RGBELoader = RGBELoader;
       window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
       if (waterMod && waterMod.Water) window._WaterClass = waterMod.Water;
-      console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, ')');
+      if (gltfMod  && gltfMod.GLTFLoader) window._GLTFLoader = gltfMod.GLTFLoader;
+      console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, '| GLTF:', !!window._GLTFLoader, ')');
     `;
     document.head.appendChild(mod);
 
@@ -465,12 +467,17 @@
 
     var s3 = document.createElement('script');
     s3.src = 'js/pro-environment.js';
-    s3.onload = function() {
+    document.body.appendChild(s3);
+
+    var s4 = document.createElement('script');
+    s4.src = 'js/pro-characters.js';
+    s4.onload = function() {
       ProGraphics.init();
       ProPostFX.init(document.querySelector('a-scene'));
       ProEnvironment.init();
+      ProCharacters.init();
     };
-    document.body.appendChild(s3);
+    document.body.appendChild(s4);
   })();
   </script>
 

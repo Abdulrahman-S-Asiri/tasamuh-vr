@@ -12,6 +12,7 @@ const ProCharacters = (() => {
   let _auraBase    = null;   // base positions snapshot
   let _eyeLight    = null;   // pulsing red point light
   let _mixers      = [];     // GLTF animation mixers
+  const _npcGroups = { garden: [], dark: [] }; // for mood visibility
 
   // ── Wait for GLTF loader ──────────────────────────────────────────
   function _waitGLTF(ms = 8000) {
@@ -160,10 +161,6 @@ const ProCharacters = (() => {
                   .forEach(c => c.setAttribute('visible', 'false'));
     });
     observer.observe(silEl, { attributes: true, attributeFilter: ['visible'] });
-    // Also poll (in case Three.js updates object3D.visible directly)
-    setInterval(() => {
-      g.visible = silEl.object3D ? silEl.object3D.visible : g.visible;
-    }, 200);
 
     console.log('[Pro Characters] Pro silhouette built ✓');
   }
@@ -192,14 +189,14 @@ const ProCharacters = (() => {
         { x:  12, y: 0, z: -22, color: 0xa3a3a3, scale: 0.95 },   // traveler
       ];
 
-      const envGarden = document.getElementById('env-garden');
-      gardenSpots.forEach((sp) => {
+      gardenSpots.forEach((sp, i) => {
         const npc = cloneSimple(proto);
+        npc.name = `npc-garden-${i}`;
         npc.position.set(sp.x, sp.y, sp.z);
         npc.rotation.y = Math.random() * Math.PI * 2;
         npc.scale.setScalar(sp.scale);
+        npc.visible = false; // hidden until mood = garden
 
-        // Tint all meshes
         npc.traverse(obj => {
           if (obj.isMesh) {
             obj.material = obj.material.clone();
@@ -208,7 +205,6 @@ const ProCharacters = (() => {
           }
         });
 
-        // Idle animation
         if (gltf.animations && gltf.animations.length) {
           const mixer = new T.AnimationMixer(npc);
           const idle = T.AnimationClip.findByName(gltf.animations, 'Idle')
@@ -218,6 +214,7 @@ const ProCharacters = (() => {
         }
 
         scene.add(npc);
+        _npcGroups.garden.push(npc);
       });
       console.log('[Pro Characters] Garden NPCs (GLTF) ✓');
     }, undefined, err => console.warn('[Pro Characters] GLTF load error:', err));
@@ -231,11 +228,13 @@ const ProCharacters = (() => {
         { x:  0, y: 1, z: -22, color: 0x0d0005, scale: 1.1  },
       ];
 
-      darkSpots.forEach((sp) => {
+      darkSpots.forEach((sp, i) => {
         const npc = cloneSimple(proto);
+        npc.name = `npc-dark-${i}`;
         npc.position.set(sp.x, sp.y, sp.z);
         npc.rotation.y = Math.random() * Math.PI * 2;
         npc.scale.setScalar(sp.scale);
+        npc.visible = false; // hidden until mood = dark
 
         npc.traverse(obj => {
           if (obj.isMesh) {
@@ -256,6 +255,7 @@ const ProCharacters = (() => {
         }
 
         scene.add(npc);
+        _npcGroups.dark.push(npc);
       });
       console.log('[Pro Characters] Dark NPCs (GLTF) ✓');
     }, undefined, () => {});
@@ -310,6 +310,14 @@ const ProCharacters = (() => {
 
     requestAnimationFrame(tick);
   }
+
+  // ── NPC mood visibility ───────────────────────────────────────────
+  function setNpcMood(key) {
+    _npcGroups.garden.forEach(n => { n.visible = key === 'garden'; });
+    _npcGroups.dark.forEach(n   => { n.visible = key === 'dark';   });
+  }
+
+  window._setNpcMood = setNpcMood;
 
   // ── Init ──────────────────────────────────────────────────────────
   function init() {

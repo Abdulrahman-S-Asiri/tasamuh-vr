@@ -84,6 +84,8 @@ const ProGraphics = (() => {
   }
 
   // Fallback when HDRI file can't load
+  let _fallbackAmbient = null;
+  let _fallbackHemi    = null;
   function _fallbackLights(key) {
     const T = window.AFRAME.THREE;
     const sc = _aScene.object3D;
@@ -93,8 +95,12 @@ const ProGraphics = (() => {
       dark:    [0x220000, 0.25],
     };
     const [col, intensity] = palettes[key] || palettes.neutral;
-    sc.add(new T.AmbientLight(col, intensity));
-    sc.add(new T.HemisphereLight(col, 0x111111, 0.3));
+    if (_fallbackAmbient) sc.remove(_fallbackAmbient);
+    if (_fallbackHemi)    sc.remove(_fallbackHemi);
+    _fallbackAmbient = new T.AmbientLight(col, intensity);
+    _fallbackHemi    = new T.HemisphereLight(col, 0x111111, 0.3);
+    sc.add(_fallbackAmbient);
+    sc.add(_fallbackHemi);
   }
 
   // ── Enhanced Renderer Settings ────────────────────────────────────
@@ -186,6 +192,7 @@ const ProGraphics = (() => {
     if (window._setPostFXMood)    window._setPostFXMood(key);    // Phase 2
     if (window._setEnvFog)        window._setEnvFog(key);        // Phase 3
     if (window._setParticleMood)  window._setParticleMood(key);  // Phase 5
+    if (window._setNpcMood)       window._setNpcMood(key);       // Phase 4
   };
 
   // ── Init ──────────────────────────────────────────────────────────

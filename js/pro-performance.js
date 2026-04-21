@@ -77,8 +77,31 @@ const ProPerformance = (() => {
     toRemove.forEach(obj => scene.remove(obj));
 
     // ── Instanced trunks ─────────────────────────────────────────
+    // Shared wind reapplication — mirrors pro-environment.js _addWind logic
+    function _applyWind(material, isTop) {
+      material.onBeforeCompile = (shader) => {
+        shader.uniforms.windTime  = { value: 0 };
+        shader.uniforms.windSpeed = { value: isTop ? 1.2 : 0.6 };
+        shader.uniforms.windStr   = { value: isTop ? 0.10 : 0.04 };
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float wt = windTime * windSpeed;
+          float sway = sin(position.x * 1.8 + wt) * cos(position.z * 1.5 + wt * 0.8)
+                     * windStr * clamp(transformed.y / 2.5, 0.0, 1.0);
+          transformed.x += sway;
+          transformed.z += sway * 0.55;`
+        );
+        material.userData.windShader = shader;
+      };
+      material.needsUpdate = true;
+      // Register with pro-environment's wind list if available
+      if (window._registerWindMaterial) window._registerWindMaterial(material);
+    }
+
     const trunkGeo = new T.CylinderGeometry(0.19, 0.28, 4.8, 8);
     const trunkMat = new T.MeshStandardMaterial({ color: TRUNK_COLOR, roughness: 0.95, metalness: 0 });
+    _applyWind(trunkMat, false);
     const trunkMesh = new T.InstancedMesh(trunkGeo, trunkMat, trunkInstances.length);
     trunkMesh.castShadow = true;
     trunkInstances.forEach((m4, i) => trunkMesh.setMatrixAt(i, m4));
@@ -93,9 +116,10 @@ const ProPerformance = (() => {
 
     const leafGeo = new T.SphereGeometry(1.0, 8, 7);
     Object.entries(byColor).forEach(([hexStr, matrices]) => {
-      const leafMat  = new T.MeshStandardMaterial({
+      const leafMat = new T.MeshStandardMaterial({
         color: parseInt(hexStr), roughness: 0.86, metalness: 0,
       });
+      _applyWind(leafMat, true);
       const leafMesh = new T.InstancedMesh(leafGeo, leafMat, matrices.length);
       leafMesh.castShadow = leafMesh.receiveShadow = true;
       matrices.forEach((m4, i) => leafMesh.setMatrixAt(i, m4));

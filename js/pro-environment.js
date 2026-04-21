@@ -98,8 +98,9 @@ const ProEnvironment = (() => {
     );
     if (envEl) {
       envEl.querySelectorAll('a-circle, a-plane').forEach(el => {
-        if (!el.getAttribute('position') || el.getAttribute('position').includes('0 0 0'))
-          el.setAttribute('visible', 'false');
+        const p = el.getAttribute('position');
+        const isOrigin = !p || (Math.abs(p.x || 0) < 0.1 && Math.abs(p.y || 0) < 0.1 && Math.abs(p.z || 0) < 0.1);
+        if (isOrigin) el.setAttribute('visible', 'false');
       });
     }
 
@@ -231,7 +232,6 @@ const ProEnvironment = (() => {
     function tick() {
       requestAnimationFrame(tick);
       const t = _clock.getElapsedTime();
-      const delta = _clock.getDelta ? 0.016 : 0.016;
 
       // Wind
       _windMaterials.forEach(m => {
@@ -251,6 +251,7 @@ const ProEnvironment = (() => {
 
   // ── Public: react to environment changes ─────────────────────────
   window._setEnvFog = _applyFog;
+  window._registerWindMaterial = (mat) => { _windMaterials.push(mat); };
 
   // ── Init ──────────────────────────────────────────────────────────
   function init() {

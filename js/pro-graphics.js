@@ -181,7 +181,10 @@ const ProGraphics = (() => {
   }
 
   // ── Public hook (called by VREnv.showGarden / showDark / showNeutral)
-  window.applyEnvironmentHDRI = (key) => _applyHDRI(key);
+  window.applyEnvironmentHDRI = (key) => {
+    _applyHDRI(key);
+    if (window._setPostFXMood) window._setPostFXMood(key); // Phase 2 mood sync
+  };
 
   // ── Init ──────────────────────────────────────────────────────────
   function init() {

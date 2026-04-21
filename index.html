@@ -425,22 +425,44 @@
     lnk.rel = 'stylesheet'; lnk.href = 'css/pro-graphics.css';
     document.head.appendChild(lnk);
 
-    // Bridge: load RGBELoader as ES module → expose as window._RGBELoader
+    // Module bridge: RGBELoader + PostFX passes → window globals
     var mod = document.createElement('script');
     mod.type = 'module';
-    mod.textContent = [
-      "import { RGBELoader } from",
-      "'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/RGBELoader.js';",
-      "window._RGBELoader = RGBELoader;",
-      "console.log('[Pro] RGBELoader ready ✓');"
-    ].join(' ');
+    mod.textContent = `
+      const BASE = 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/';
+      const [
+        { RGBELoader },
+        { EffectComposer },
+        { RenderPass },
+        { UnrealBloomPass },
+        { SSAOPass },
+        { ShaderPass },
+      ] = await Promise.all([
+        import(BASE + 'loaders/RGBELoader.js'),
+        import(BASE + 'postprocessing/EffectComposer.js'),
+        import(BASE + 'postprocessing/RenderPass.js'),
+        import(BASE + 'postprocessing/UnrealBloomPass.js'),
+        import(BASE + 'postprocessing/SSAOPass.js'),
+        import(BASE + 'postprocessing/ShaderPass.js'),
+      ]);
+      window._RGBELoader = RGBELoader;
+      window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
+      console.log('[Pro] Module bridge ready ✓');
+    `;
     document.head.appendChild(mod);
 
-    // Load pro-graphics.js and init
-    var s = document.createElement('script');
-    s.src = 'js/pro-graphics.js';
-    s.onload = function() { ProGraphics.init(); };
-    document.body.appendChild(s);
+    // Load pro-graphics.js → pro-postfx.js → init both
+    var s1 = document.createElement('script');
+    s1.src = 'js/pro-graphics.js';
+    document.body.appendChild(s1);
+
+    var s2 = document.createElement('script');
+    s2.src = 'js/pro-postfx.js';
+    s2.onload = function() {
+      ProGraphics.init();
+      ProPostFX.init(document.querySelector('a-scene'));
+    };
+    document.body.appendChild(s2);
   })();
   </script>
 

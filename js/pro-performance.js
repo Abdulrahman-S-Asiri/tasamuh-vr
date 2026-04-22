@@ -62,6 +62,9 @@ const ProPerformance = (() => {
         if (hex === TRUNK_COLOR) {
           trunkInstances.push(mat4);
         } else if (FOLIAGE_COLS.has(hex)) {
+          // Bake foliage radius into instance matrix (geometry is normalised to 1.0)
+          const r = (m.geometry.parameters && m.geometry.parameters.radius) || 1.0;
+          mat4.scale(new T.Vector3(r, r, r));
           foliageInstances.push({ matrix: mat4, colorHex: hex });
         }
       });

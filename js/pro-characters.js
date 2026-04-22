@@ -13,6 +13,7 @@ const ProCharacters = (() => {
   let _eyeLight    = null;   // pulsing red point light
   let _mixers      = [];     // GLTF animation mixers
   const _npcGroups = { garden: [], dark: [] }; // for mood visibility
+  let _currentMood = 'neutral'; // tracked so late-loading NPCs adopt it
 
   // ── Wait for GLTF loader ──────────────────────────────────────────
   function _waitGLTF(ms = 8000) {
@@ -216,6 +217,7 @@ const ProCharacters = (() => {
         scene.add(npc);
         _npcGroups.garden.push(npc);
       });
+      setNpcMood(_currentMood); // apply whatever mood is current now that NPCs exist
       console.log('[Pro Characters] Garden NPCs (GLTF) ✓');
     }, undefined, err => console.warn('[Pro Characters] GLTF load error:', err));
 
@@ -257,6 +259,7 @@ const ProCharacters = (() => {
         scene.add(npc);
         _npcGroups.dark.push(npc);
       });
+      setNpcMood(_currentMood); // apply whatever mood is current now that NPCs exist
       console.log('[Pro Characters] Dark NPCs (GLTF) ✓');
     }, undefined, () => {});
   }
@@ -313,6 +316,7 @@ const ProCharacters = (() => {
 
   // ── NPC mood visibility ───────────────────────────────────────────
   function setNpcMood(key) {
+    _currentMood = key;
     _npcGroups.garden.forEach(n => { n.visible = key === 'garden'; });
     _npcGroups.dark.forEach(n   => { n.visible = key === 'dark';   });
   }

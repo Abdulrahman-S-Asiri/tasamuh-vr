@@ -1,5 +1,10 @@
 /* =========================================================
  *  interact-pro.js — Advanced interaction & controls
+ *
+ *  Loaded UNCONDITIONALLY. The "-pro" suffix is historical —
+ *  it does NOT refer to the ?pro=1 graphics flag. Adds extra
+ *  A-Frame components on top of base interactives.js.
+ *
  *  - Run modifier (Shift on desktop, grip on Quest)
  *  - Tree-touch reaction (rustle + petal burst)
  *  - Haptic pulse on Quest controllers

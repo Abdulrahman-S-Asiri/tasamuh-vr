@@ -10,8 +10,11 @@ const ProPerformance = (() => {
   let _sunLight = null;   // ref to sun DirectionalLight from pro-graphics
 
   // ── Device tier detection ────────────────────────────────────────
-  // Returns 'high' | 'mid' | 'low'
+  // Returns 'high' | 'mid' | 'low'.
+  // Defers to window.QualityTier (set in quality.js) when available so
+  // the whole app uses one source of truth.
   function _tier() {
+    if (window.QualityTier) return window.QualityTier;
     const dpr = window.devicePixelRatio || 1;
     const cores = navigator.hardwareConcurrency || 2;
     if (dpr >= 2 && cores >= 6) return 'high';
@@ -72,8 +75,8 @@ const ProPerformance = (() => {
     });
 
     if (trunkInstances.length === 0) {
-      console.log('[Pro Perf] No pro-trees found to instance (may run too early, skipping)');
-      return;
+      // World may not have built yet — caller schedules a retry
+      return false;
     }
 
     // Remove originals
@@ -131,6 +134,7 @@ const ProPerformance = (() => {
     });
 
     console.log(`[Pro Perf] Instanced ${trunkInstances.length} trunks + ${foliageInstances.length} foliage ✓`);
+    return true;
   }
 
   // ── LOD for NPCs — hide beyond threshold distance ────────────────
@@ -148,12 +152,12 @@ const ProPerformance = (() => {
 
     function lodTick() {
       requestAnimationFrame(lodTick);
+      // Skip when tab/scene hidden (battery on mobile, no-op work in 2D phases)
+      if (document.hidden) return;
       camera.getWorldPosition(_tmp);
       scene.children.forEach(obj => {
         if (obj.type !== 'Group' || obj.name === 'pro-silhouette') return;
-        // Only NPC groups (those NOT identified as tree groups earlier)
         const dist2 = obj.position.distanceToSquared(_tmp);
-        // Only toggle if it was visible (don't fight pro-silhouette MutationObserver)
         if (obj.name && obj.name.startsWith('npc-')) {
           obj.visible = dist2 < HIDE_DIST2;
         }
@@ -185,6 +189,7 @@ const ProPerformance = (() => {
     let _lastUpdate = 0;
     function shadowTick(now) {
       requestAnimationFrame(shadowTick);
+      if (document.hidden) return;
       if (now - _lastUpdate < 250) return; // update 4×/s — shadow moves slowly
       _lastUpdate = now;
 
@@ -245,8 +250,18 @@ const ProPerformance = (() => {
       _applyNpcLOD();
       _scaleParticles();
 
-      // Instancing runs after world-builder trees are placed (~1s)
-      setTimeout(_instanceTrees, 1200);
+      // Instancing runs after world-builder trees are placed.
+      // World-builder is async on slow phones — retry once if first attempt
+      // finds no trees.
+      setTimeout(() => {
+        if (_instanceTrees() === false) {
+          setTimeout(() => {
+            if (_instanceTrees() === false) {
+              console.warn('[Pro Perf] instancing skipped — no pro-trees found after retry');
+            }
+          }, 1800);
+        }
+      }, 1200);
     };
     _aScene.hasLoaded ? run() : _aScene.addEventListener('loaded', run, { once: true });
   }

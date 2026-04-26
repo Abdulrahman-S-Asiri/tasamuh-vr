@@ -125,11 +125,54 @@ body {
   backdrop-filter: blur(12px);
   cursor: pointer;
   transition: all var(--transition-fast);
+  /* button reset (now an actual <button>) */
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .audio-toggle:hover {
   background: rgba(0, 0, 0, 0.7);
   border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* تلميح: نقطة نابضة قبل أول ضغطة (iOS يحتاج user gesture لتشغيل الصوت) */
+.audio-toggle.needs-tap::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+  animation: audioPulse 1.4s ease-out infinite;
+}
+@keyframes audioPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* تلميح Quest في شاشة البداية */
+.quest-hint {
+  margin-top: 16px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-dim);
+  background: rgba(100, 200, 255, 0.08);
+  border: 1px solid rgba(100, 200, 255, 0.2);
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+/* عند دخول وضع VR (immersive أو magic-window): أخفِ كل HUDs الـ HTML */
+body.in-vr #vrHud,
+body.in-vr #resultHud,
+body.in-vr .audio-toggle,
+body.in-vr #joystick {
+  display: none !important;
 }
 
 .audio-bars {

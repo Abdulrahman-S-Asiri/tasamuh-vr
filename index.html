@@ -3,10 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="description" content="تجربة واقع افتراضي تفاعلية عن التسامح">
+  <meta name="description" content="تجربة واقع افتراضي تفاعلية عن التسامح والانتقام — تعمل على Quest 3 والجوال والكمبيوتر">
   <meta name="theme-color" content="#0a0a0f">
-  
-  <title>تجربة التسامح - VR</title>
+
+  <title>رحلة التسامح — تجربة VR تفاعلية</title>
+
+  <!-- Open Graph / مشاركة على وسائل التواصل
+       (أضف og-cover.jpg و apple-touch-icon.png لاحقاً ثم فعّل الأسطر المعلّقة) -->
+  <meta property="og:title" content="رحلة التسامح — تجربة VR تفاعلية">
+  <meta property="og:description" content="تجربة واقع افتراضي عربية عن التسامح والانتقام">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <!-- <meta property="og:image" content="og-cover.jpg"> -->
+
+  <!-- أيقونات + manifest -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Debug / log gate: silence dev-tagged logs in production.
+       Add ?debug=1 to the URL to re-enable them and the on-screen overlay. -->
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      window._DEBUG = params.has('debug');
+      if (!window._DEBUG && console && console.log) {
+        var orig = console.log;
+        var TAG_RE = /^\[(Pro|quality|assets|Perf|realism)/;
+        console.log = function () {
+          if (arguments.length && typeof arguments[0] === 'string' && TAG_RE.test(arguments[0])) return;
+          return orig.apply(console, arguments);
+        };
+      }
+    })();
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,23 +62,23 @@
   <!-- ============================================= -->
   <!--              شاشة التحميل                      -->
   <!-- ============================================= -->
-  <div id="loading">
-    <div class="loader-ring"></div>
+  <div id="loading" role="status" aria-live="polite">
+    <div class="loader-ring" aria-hidden="true"></div>
     <div class="loader-text">جاري تحميل التجربة...</div>
   </div>
 
   <!-- شريط التقدم -->
-  <div class="progress-bar">
+  <div class="progress-bar" role="progressbar" aria-label="تقدّم التجربة" aria-valuemin="0" aria-valuemax="100">
     <div class="progress-fill" id="progressFill"></div>
   </div>
 
   <!-- زر الصوت -->
-  <div class="audio-toggle" id="audioToggle">
-    <div class="audio-bars" id="audioBars">
+  <button type="button" class="audio-toggle" id="audioToggle" role="switch" aria-checked="true" aria-label="تبديل الصوت">
+    <div class="audio-bars" id="audioBars" aria-hidden="true">
       <span></span><span></span><span></span><span></span>
     </div>
     <span class="audio-label">الصوت</span>
-  </div>
+  </button>
 
   <!-- ============================================= -->
   <!--         المرحلة 1: بوابة الدخول                -->
@@ -70,15 +100,18 @@
       <div class="gender-section">
         <p class="gender-prompt">اختر:</p>
         <div class="gender-options">
-          <button class="btn btn-gender" data-gender="male" onclick="App.selectGender('male')">
+          <button class="btn btn-gender" data-gender="male" aria-pressed="false" onclick="App.selectGender('male')">
             <span class="btn-icon">♂</span>
             <span>ذكر</span>
           </button>
-          <button class="btn btn-gender" data-gender="female" onclick="App.selectGender('female')">
+          <button class="btn btn-gender" data-gender="female" aria-pressed="false" onclick="App.selectGender('female')">
             <span class="btn-icon">♀</span>
             <span>أنثى</span>
           </button>
         </div>
+        <p class="quest-hint" id="questHint" style="display:none">
+          🥽 على Quest: اضغط زر دخول الـ VR، ثم امشِ نحو الأبواب لتختار طريقك
+        </p>
       </div>
     </div>
   </section>
@@ -93,13 +126,7 @@
     <div id="resultHudInner"></div>
   </div>
 
-  <!-- (مرحلة النتيجة القديمة أُزيلت — استُبدلت بـ #resultHud الذي يطفو فوق العالم 3D) -->
-  <section class="phase" id="phase-result" data-phase="result" style="display:none">
-    <div class="phase-bg result-bg" id="resultBg"></div>
-    <div class="particles" id="resultParticles"></div>
-    <div class="shatter-fx" id="shatterFx"></div>
-    <div class="phase-content"><div class="result-card" id="resultCard"></div></div>
-  </section>
+  <!-- (مرحلة النتيجة القديمة أُزيلت — تستخدم #resultHud العائم بدلاً منها) -->
 
   <!-- ============================================= -->
   <!--           المرحلة 5: الخاتمة                   -->
@@ -118,8 +145,8 @@
         <p class="closing-subtitle">اختر بحكمة</p>
         <div class="closing-divider"></div>
         <p class="closing-brand" id="closingProject">اسم المشروع</p>
-        <button class="btn btn-restart" onclick="App.restart()">
-          <span>🔄</span> أعد التجربة
+        <button class="btn btn-restart" onclick="App.restart()" aria-label="إعادة التجربة من البداية">
+          <span aria-hidden="true">🔄</span> أعد التجربة
         </button>
       </div>
     </div>
@@ -131,9 +158,11 @@
   <a-scene
     id="vrScene"
     embedded
+    role="application"
+    aria-label="تجربة الواقع الافتراضي — رحلة التسامح"
     vr-mode-ui="enabled: true"
     renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.15; highRefreshRate: true; foveationLevel: 1; anisotropy: 16; logarithmicDepthBuffer: true; maxCanvasWidth: 3840; maxCanvasHeight: 2160"
-    shadow="type: pcfsoft; autoUpdate: true"
+    shadow="type: pcf; autoUpdate: false"
     quality-boost
     bloom-fx="strength: 0.55; radius: 0.45; threshold: 0.82"
     assets-boot

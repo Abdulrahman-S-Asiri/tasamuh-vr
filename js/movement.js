@@ -21,7 +21,9 @@ const Movement = (() => {
     Object.assign(wrap.style, {
       position: 'fixed', left: '20px', bottom: '20px',
       width: '140px', height: '140px',
-      zIndex: '9999', userSelect: 'none', touchAction: 'none',
+      // Stay above scene canvas (z=1) and audio toggle (z=1500),
+      // but below loader (z=9999) so the loader overlays everything.
+      zIndex: '1600', userSelect: 'none', touchAction: 'none',
       display: 'block',
     });
     const base = wrap.querySelector('#joystick-base');

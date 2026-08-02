@@ -48,6 +48,15 @@
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
   <!-- مكوّن teleport-controls -->
   <script src="https://unpkg.com/aframe-blink-controls@0.4.3/dist/aframe-blink-controls.min.js"></script>
+
+  <!-- Resolve Three.js bare imports used by the optional pro modules. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js"
+    }
+  }
+  </script>
   
   <!-- Styles -->
   <link rel="stylesheet" href="css/variables.css">
@@ -444,79 +453,110 @@
   <!-- ============================================= -->
   <script>
   (function() {
-    if (!new URLSearchParams(location.search).has('pro')) return;
+    if (new URLSearchParams(location.search).get('pro') !== '1') return;
 
-    // Mark <html> so pro-graphics.css selectors activate
     document.documentElement.classList.add('pro-enabled');
 
-    // Load pro CSS
     var lnk = document.createElement('link');
-    lnk.rel = 'stylesheet'; lnk.href = 'css/pro-graphics.css';
+    lnk.rel = 'stylesheet';
+    lnk.href = 'css/pro-graphics.css';
     document.head.appendChild(lnk);
 
-    // Module bridge: RGBELoader + PostFX passes → window globals
+    var moduleReady = new Promise(function(resolve, reject) {
+      window.addEventListener('pro-modules-ready', resolve, { once: true });
+      window.addEventListener('pro-modules-error', function(event) {
+        reject(new Error(event.detail || 'Pro module bridge failed'));
+      }, { once: true });
+    });
+
+    // Module bridge: loaders and post-processing passes → window globals.
     var mod = document.createElement('script');
     mod.type = 'module';
     mod.textContent = `
       const BASE = 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/';
-      const [
-        { RGBELoader },
-        { EffectComposer },
-        { RenderPass },
-        { UnrealBloomPass },
-        { SSAOPass },
-        { ShaderPass },
-        waterMod,
-      ] = await Promise.all([
-        import(BASE + 'loaders/RGBELoader.js'),
-        import(BASE + 'postprocessing/EffectComposer.js'),
-        import(BASE + 'postprocessing/RenderPass.js'),
-        import(BASE + 'postprocessing/UnrealBloomPass.js'),
-        import(BASE + 'postprocessing/SSAOPass.js'),
-        import(BASE + 'postprocessing/ShaderPass.js'),
-        import(BASE + 'objects/Water2.js').catch(() => ({})),
-        import(BASE + 'loaders/GLTFLoader.js').catch(() => ({})),
-      ]);
-      window._RGBELoader = RGBELoader;
-      window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
-      if (waterMod && waterMod.Water) window._WaterClass = waterMod.Water;
-      if (gltfMod  && gltfMod.GLTFLoader) window._GLTFLoader = gltfMod.GLTFLoader;
-      console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, '| GLTF:', !!window._GLTFLoader, ')');
+      try {
+        const [
+          { RGBELoader },
+          { EffectComposer },
+          { RenderPass },
+          { UnrealBloomPass },
+          { SSAOPass },
+          { ShaderPass },
+          waterMod,
+          gltfMod,
+        ] = await Promise.all([
+          import(BASE + 'loaders/RGBELoader.js'),
+          import(BASE + 'postprocessing/EffectComposer.js'),
+          import(BASE + 'postprocessing/RenderPass.js'),
+          import(BASE + 'postprocessing/UnrealBloomPass.js'),
+          import(BASE + 'postprocessing/SSAOPass.js'),
+          import(BASE + 'postprocessing/ShaderPass.js'),
+          import(BASE + 'objects/Water2.js').catch(() => ({})),
+          import(BASE + 'loaders/GLTFLoader.js').catch(() => ({})),
+        ]);
+
+        window._RGBELoader = RGBELoader;
+        window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
+        if (waterMod && waterMod.Water) window._WaterClass = waterMod.Water;
+        if (gltfMod && gltfMod.GLTFLoader) window._GLTFLoader = gltfMod.GLTFLoader;
+        window.dispatchEvent(new Event('pro-modules-ready'));
+        console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, '| GLTF:', !!window._GLTFLoader, ')');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[Pro] Module bridge failed:', error);
+        window.dispatchEvent(new CustomEvent('pro-modules-error', { detail: message }));
+      }
     `;
     document.head.appendChild(mod);
 
-    // Load pro-graphics.js → pro-postfx.js → init both
-    var s1 = document.createElement('script');
-    s1.src = 'js/pro-graphics.js';
-    document.body.appendChild(s1);
+    function loadScript(src) {
+      return new Promise(function(resolve, reject) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        script.onload = resolve;
+        script.onerror = function() {
+          reject(new Error('Failed to load ' + src));
+        };
+        document.body.appendChild(script);
+      });
+    }
 
-    var s2 = document.createElement('script');
-    s2.src = 'js/pro-postfx.js';
-    document.body.appendChild(s2);
+    window._proReady = (async function() {
+      try {
+        await moduleReady;
 
-    var s3 = document.createElement('script');
-    s3.src = 'js/pro-environment.js';
-    document.body.appendChild(s3);
+        var scripts = [
+          'js/pro-graphics.js',
+          'js/pro-postfx.js',
+          'js/pro-environment.js',
+          'js/pro-characters.js',
+          'js/pro-particles.js',
+          'js/pro-performance.js'
+        ];
+        for (var i = 0; i < scripts.length; i += 1) {
+          await loadScript(scripts[i]);
+        }
 
-    var s4 = document.createElement('script');
-    s4.src = 'js/pro-characters.js';
-    document.body.appendChild(s4);
+        var scene = document.querySelector('a-scene');
+        if (!scene) throw new Error('A-Frame scene was not found');
 
-    var s5 = document.createElement('script');
-    s5.src = 'js/pro-particles.js';
-    document.body.appendChild(s5);
+        ProGraphics.init();
+        ProPostFX.init(scene);
+        ProEnvironment.init();
+        ProCharacters.init();
+        ProParticles.init();
+        ProPerformance.init();
 
-    var s6 = document.createElement('script');
-    s6.src = 'js/pro-performance.js';
-    s6.onload = function() {
-      ProGraphics.init();
-      ProPostFX.init(document.querySelector('a-scene'));
-      ProEnvironment.init();
-      ProCharacters.init();
-      ProParticles.init();
-      ProPerformance.init();
-    };
-    document.body.appendChild(s6);
+        window.dispatchEvent(new Event('pro-ready'));
+        return true;
+      } catch (error) {
+        window._proInitError = error instanceof Error ? error.message : String(error);
+        console.error('[Pro] Initialization failed:', error);
+        window.dispatchEvent(new CustomEvent('pro-error', { detail: window._proInitError }));
+        throw error;
+      }
+    })();
   })();
   </script>
 

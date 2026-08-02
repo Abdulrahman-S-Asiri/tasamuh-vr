@@ -48,7 +48,7 @@ const ProPerformance = (() => {
       if (obj.type !== 'Group' || obj.name === 'pro-silhouette') return;
       let isTrunk = false;
       obj.traverse(m => {
-        if (!m.isMesh || !m.material) return;
+        if (!m.isMesh || !m.material || Array.isArray(m.material) || !m.material.color) return;
         const hex = m.material.color.getHex();
         if (hex === TRUNK_COLOR) isTrunk = true;
       });
@@ -56,7 +56,7 @@ const ProPerformance = (() => {
 
       // It's a tree group — harvest meshes
       obj.traverse(m => {
-        if (!m.isMesh || !m.material) return;
+        if (!m.isMesh || !m.material || Array.isArray(m.material) || !m.material.color) return;
         const hex = m.material.color.getHex();
         const mat4 = new T.Matrix4();
         m.updateWorldMatrix(true, false);

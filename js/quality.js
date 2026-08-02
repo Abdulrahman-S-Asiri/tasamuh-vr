@@ -93,6 +93,7 @@ AFRAME.registerComponent('quality-boost', {
     if (sceneEl.hasLoaded) apply();
     else sceneEl.addEventListener('loaded', apply);
     sceneEl.addEventListener('model-loaded', apply);
+    sceneEl.addEventListener('assets-ready', apply);
     sceneEl.addEventListener('child-attached', () => setTimeout(apply, 50));
   }
 });

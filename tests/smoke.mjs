@@ -12,7 +12,14 @@ try {
 		args: ['--enable-unsafe-swiftshader']
 	});
 	page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-	page.on('pageerror', (error) => pageErrors.push(error.message));
+	page.on('console', (message) => {
+		if (message.type() === 'error') console.error('browser console:', message.text());
+	});
+	page.on('pageerror', (error) => {
+		const details = error.stack || error.message;
+		pageErrors.push(details);
+		console.error('browser pageerror:', details);
+	});
 
 	const response = await page.goto(url, {
 		waitUntil: 'domcontentloaded',

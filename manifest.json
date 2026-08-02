@@ -1,0 +1,16 @@
+{
+  "name": "رحلة التسامح — تجربة VR تفاعلية",
+  "short_name": "التسامح",
+  "description": "تجربة واقع افتراضي عربية عن التسامح والانتقام، تعمل على Quest 3 والجوال والكمبيوتر",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

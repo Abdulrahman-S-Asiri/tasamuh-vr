@@ -3,10 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="description" content="تجربة واقع افتراضي تفاعلية عن التسامح">
+  <meta name="description" content="تجربة واقع افتراضي تفاعلية عن التسامح والانتقام — تعمل على Quest 3 والجوال والكمبيوتر">
   <meta name="theme-color" content="#0a0a0f">
-  
-  <title>تجربة التسامح - VR</title>
+
+  <title>رحلة التسامح — تجربة VR تفاعلية</title>
+
+  <!-- Open Graph / مشاركة على وسائل التواصل
+       (أضف og-cover.jpg و apple-touch-icon.png لاحقاً ثم فعّل الأسطر المعلّقة) -->
+  <meta property="og:title" content="رحلة التسامح — تجربة VR تفاعلية">
+  <meta property="og:description" content="تجربة واقع افتراضي عربية عن التسامح والانتقام">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <!-- <meta property="og:image" content="og-cover.jpg"> -->
+
+  <!-- أيقونات + manifest -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Debug / log gate: silence dev-tagged logs in production.
+       Add ?debug=1 to the URL to re-enable them and the on-screen overlay. -->
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      window._DEBUG = params.has('debug');
+      if (!window._DEBUG && console && console.log) {
+        var orig = console.log;
+        var TAG_RE = /^\[(Pro|quality|assets|Perf|realism)/;
+        console.log = function () {
+          if (arguments.length && typeof arguments[0] === 'string' && TAG_RE.test(arguments[0])) return;
+          return orig.apply(console, arguments);
+        };
+      }
+    })();
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +48,15 @@
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.4/dist/aframe-extras.min.js"></script>
   <!-- مكوّن teleport-controls -->
   <script src="https://unpkg.com/aframe-blink-controls@0.4.3/dist/aframe-blink-controls.min.js"></script>
+
+  <!-- Resolve Three.js bare imports used by the optional pro modules. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/super-three@0.158.0/build/three.module.js"
+    }
+  }
+  </script>
   
   <!-- Styles -->
   <link rel="stylesheet" href="css/variables.css">
@@ -32,23 +71,23 @@
   <!-- ============================================= -->
   <!--              شاشة التحميل                      -->
   <!-- ============================================= -->
-  <div id="loading">
-    <div class="loader-ring"></div>
+  <div id="loading" role="status" aria-live="polite">
+    <div class="loader-ring" aria-hidden="true"></div>
     <div class="loader-text">جاري تحميل التجربة...</div>
   </div>
 
   <!-- شريط التقدم -->
-  <div class="progress-bar">
+  <div class="progress-bar" role="progressbar" aria-label="تقدّم التجربة" aria-valuemin="0" aria-valuemax="100">
     <div class="progress-fill" id="progressFill"></div>
   </div>
 
   <!-- زر الصوت -->
-  <div class="audio-toggle" id="audioToggle">
-    <div class="audio-bars" id="audioBars">
+  <button type="button" class="audio-toggle" id="audioToggle" role="switch" aria-checked="true" aria-label="تبديل الصوت">
+    <div class="audio-bars" id="audioBars" aria-hidden="true">
       <span></span><span></span><span></span><span></span>
     </div>
     <span class="audio-label">الصوت</span>
-  </div>
+  </button>
 
   <!-- ============================================= -->
   <!--         المرحلة 1: بوابة الدخول                -->
@@ -70,15 +109,18 @@
       <div class="gender-section">
         <p class="gender-prompt">اختر:</p>
         <div class="gender-options">
-          <button class="btn btn-gender" data-gender="male" onclick="App.selectGender('male')">
+          <button class="btn btn-gender" data-gender="male" aria-pressed="false" onclick="App.selectGender('male')">
             <span class="btn-icon">♂</span>
             <span>ذكر</span>
           </button>
-          <button class="btn btn-gender" data-gender="female" onclick="App.selectGender('female')">
+          <button class="btn btn-gender" data-gender="female" aria-pressed="false" onclick="App.selectGender('female')">
             <span class="btn-icon">♀</span>
             <span>أنثى</span>
           </button>
         </div>
+        <p class="quest-hint" id="questHint" style="display:none">
+          🥽 على Quest: اضغط زر دخول الـ VR، ثم امشِ نحو الأبواب لتختار طريقك
+        </p>
       </div>
     </div>
   </section>
@@ -93,13 +135,7 @@
     <div id="resultHudInner"></div>
   </div>
 
-  <!-- (مرحلة النتيجة القديمة أُزيلت — استُبدلت بـ #resultHud الذي يطفو فوق العالم 3D) -->
-  <section class="phase" id="phase-result" data-phase="result" style="display:none">
-    <div class="phase-bg result-bg" id="resultBg"></div>
-    <div class="particles" id="resultParticles"></div>
-    <div class="shatter-fx" id="shatterFx"></div>
-    <div class="phase-content"><div class="result-card" id="resultCard"></div></div>
-  </section>
+  <!-- (مرحلة النتيجة القديمة أُزيلت — تستخدم #resultHud العائم بدلاً منها) -->
 
   <!-- ============================================= -->
   <!--           المرحلة 5: الخاتمة                   -->
@@ -118,8 +154,8 @@
         <p class="closing-subtitle">اختر بحكمة</p>
         <div class="closing-divider"></div>
         <p class="closing-brand" id="closingProject">اسم المشروع</p>
-        <button class="btn btn-restart" onclick="App.restart()">
-          <span>🔄</span> أعد التجربة
+        <button class="btn btn-restart" onclick="App.restart()" aria-label="إعادة التجربة من البداية">
+          <span aria-hidden="true">🔄</span> أعد التجربة
         </button>
       </div>
     </div>
@@ -131,9 +167,11 @@
   <a-scene
     id="vrScene"
     embedded
+    role="application"
+    aria-label="تجربة الواقع الافتراضي — رحلة التسامح"
     vr-mode-ui="enabled: true"
     renderer="colorManagement: true; sortObjects: true; antialias: true; physicallyCorrectLights: true; toneMapping: ACESFilmic; exposure: 1.15; highRefreshRate: true; foveationLevel: 1; anisotropy: 16; logarithmicDepthBuffer: true; maxCanvasWidth: 3840; maxCanvasHeight: 2160"
-    shadow="type: pcfsoft; autoUpdate: true"
+    shadow="type: pcf; autoUpdate: false"
     quality-boost
     bloom-fx="strength: 0.55; radius: 0.45; threshold: 0.82"
     assets-boot
@@ -408,6 +446,119 @@
     window.addEventListener('load', () => setTimeout(renderArabicLabels, 800));
   </script>
   <script src="js/app.js"></script>
+
+  <!-- ============================================= -->
+  <!--  Pro Graphics — activated by ?pro=1 only      -->
+  <!--  Safe: nothing below runs without that flag   -->
+  <!-- ============================================= -->
+  <script>
+  (function() {
+    if (new URLSearchParams(location.search).get('pro') !== '1') return;
+
+    document.documentElement.classList.add('pro-enabled');
+
+    var lnk = document.createElement('link');
+    lnk.rel = 'stylesheet';
+    lnk.href = 'css/pro-graphics.css';
+    document.head.appendChild(lnk);
+
+    var moduleReady = new Promise(function(resolve, reject) {
+      window.addEventListener('pro-modules-ready', resolve, { once: true });
+      window.addEventListener('pro-modules-error', function(event) {
+        reject(new Error(event.detail || 'Pro module bridge failed'));
+      }, { once: true });
+    });
+
+    // Module bridge: loaders and post-processing passes → window globals.
+    var mod = document.createElement('script');
+    mod.type = 'module';
+    mod.textContent = `
+      const BASE = 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/';
+      try {
+        const [
+          { RGBELoader },
+          { EffectComposer },
+          { RenderPass },
+          { UnrealBloomPass },
+          { SSAOPass },
+          { ShaderPass },
+          waterMod,
+          gltfMod,
+        ] = await Promise.all([
+          import(BASE + 'loaders/RGBELoader.js'),
+          import(BASE + 'postprocessing/EffectComposer.js'),
+          import(BASE + 'postprocessing/RenderPass.js'),
+          import(BASE + 'postprocessing/UnrealBloomPass.js'),
+          import(BASE + 'postprocessing/SSAOPass.js'),
+          import(BASE + 'postprocessing/ShaderPass.js'),
+          import(BASE + 'objects/Water2.js').catch(() => ({})),
+          import(BASE + 'loaders/GLTFLoader.js').catch(() => ({})),
+        ]);
+
+        window._RGBELoader = RGBELoader;
+        window._PostFX = { EffectComposer, RenderPass, UnrealBloomPass, SSAOPass, ShaderPass };
+        if (waterMod && waterMod.Water) window._WaterClass = waterMod.Water;
+        if (gltfMod && gltfMod.GLTFLoader) window._GLTFLoader = gltfMod.GLTFLoader;
+        window.dispatchEvent(new Event('pro-modules-ready'));
+        console.log('[Pro] Module bridge ready ✓ (Water2:', !!window._WaterClass, '| GLTF:', !!window._GLTFLoader, ')');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[Pro] Module bridge failed:', error);
+        window.dispatchEvent(new CustomEvent('pro-modules-error', { detail: message }));
+      }
+    `;
+    document.head.appendChild(mod);
+
+    function loadScript(src) {
+      return new Promise(function(resolve, reject) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        script.onload = resolve;
+        script.onerror = function() {
+          reject(new Error('Failed to load ' + src));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    window._proReady = (async function() {
+      try {
+        await moduleReady;
+
+        var scripts = [
+          'js/pro-graphics.js',
+          'js/pro-postfx.js',
+          'js/pro-environment.js',
+          'js/pro-characters.js',
+          'js/pro-particles.js',
+          'js/pro-performance.js'
+        ];
+        for (var i = 0; i < scripts.length; i += 1) {
+          await loadScript(scripts[i]);
+        }
+
+        var scene = document.querySelector('a-scene');
+        if (!scene) throw new Error('A-Frame scene was not found');
+
+        ProGraphics.init();
+        ProPostFX.init(scene);
+        ProEnvironment.init();
+        ProCharacters.init();
+        ProParticles.init();
+        ProPerformance.init();
+
+        window.dispatchEvent(new Event('pro-ready'));
+        return true;
+      } catch (error) {
+        window._proInitError = error instanceof Error ? error.message : String(error);
+        console.error('[Pro] Initialization failed:', error);
+        window.dispatchEvent(new CustomEvent('pro-error', { detail: window._proInitError }));
+        throw error;
+      }
+    })();
+  })();
+  </script>
 
 </body>
 </html>

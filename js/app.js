@@ -12,8 +12,9 @@ const App = (() => {
     choice2: null,      // الخيار الفرعي
   };
 
-  // ===== Debug overlay (للجوال) =====
+  // ===== Debug overlay (للجوال) — مفعّل فقط مع ?debug=1 =====
   function _debug(msg) {
+    if (!window._DEBUG) return;
     let el = document.getElementById('debugLog');
     if (!el) {
       el = document.createElement('div');
@@ -30,7 +31,11 @@ const App = (() => {
     el.textContent += msg + '\n';
     if (el.scrollHeight > 400) el.textContent = el.textContent.split('\n').slice(-20).join('\n');
   }
-  window.addEventListener('error', (e) => _debug('ERR: ' + e.message + ' @' + (e.filename || '?') + ':' + e.lineno));
+  if (window._DEBUG) {
+    window.addEventListener('error', (e) =>
+      _debug('ERR: ' + e.message + ' @' + (e.filename || '?') + ':' + e.lineno)
+    );
+  }
 
   // ===== التهيئة =====
   function init() {
@@ -44,8 +49,51 @@ const App = (() => {
     // النطق
     Speech.init();
 
-    // زر الصوت
-    document.getElementById('audioToggle').addEventListener('click', Audio.toggle);
+    // زر الصوت — أزل وميض الإشعار بعد أول ضغطة (للجوال/iOS)
+    const audioBtn = document.getElementById('audioToggle');
+    if (audioBtn) {
+      audioBtn.classList.add('needs-tap');
+      audioBtn.addEventListener('click', () => {
+        Audio.toggle();
+        audioBtn.classList.remove('needs-tap');
+      }, { once: false });
+    }
+
+    // اختصارات لوحة المفاتيح للوصول (يمر اللاعب من الباب يدوياً عادة،
+    // لكن مستخدمو لوحة المفاتيح يحتاجون بديلاً)
+    //   1 → الباب الأول   |   2 → الباب الثاني (لو موجود)
+    window.addEventListener('keydown', (e) => {
+      if (e.key !== '1' && e.key !== '2') return;
+      // تجاهل إذا كان المستخدم يكتب في حقل
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (state.phase === 'decision1') {
+        const cfg = DOOR1_CONFIG[e.key === '1' ? 0 : 1];
+        if (cfg) makeChoice1(cfg.id);
+      } else if (state.phase === 'decision2' && state.choice1) {
+        const sub = (CONFIG.decisionTree[state.choice1] || {}).sub || [];
+        const opt = sub[e.key === '1' ? 0 : 1];
+        if (opt) makeChoice2(state.choice1, opt.id);
+      }
+    });
+
+    // أخفِ HUDs الـ HTML عند دخول وضع VR (تطفو فوق المشهد في magic-window)
+    const sceneEl = document.querySelector('a-scene');
+    if (sceneEl) {
+      sceneEl.addEventListener('enter-vr', () => document.body.classList.add('in-vr'));
+      sceneEl.addEventListener('exit-vr',  () => document.body.classList.remove('in-vr'));
+
+      // أظهر تلميح Quest فقط لو الجهاز يدعم immersive-vr
+      if (navigator.xr && navigator.xr.isSessionSupported) {
+        navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+          if (supported) {
+            const hint = document.getElementById('questHint');
+            if (hint) hint.style.display = 'block';
+          }
+        }).catch(() => {});
+      }
+    }
 
     // مزامنة المستمع الصوتي مع كاميرا VR (للصوت المكاني 360°)
     if (VREnv.startListenerSync) VREnv.startListenerSync();

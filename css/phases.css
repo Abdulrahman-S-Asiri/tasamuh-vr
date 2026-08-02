@@ -407,11 +407,6 @@
 .result-bg.forgive::after,
 .result-bg.revenge::after { content: none; }
 
-/* مرحلة النتيجة لا تحجب التفاعل مع المشهد */
-#phase-result.active { pointer-events: none; }
-#phase-result.active .result-card,
-#phase-result.active .btn { pointer-events: auto; }
-
 .result-card {
   max-width: 560px;
   margin: 0 auto;
@@ -423,10 +418,6 @@
   padding: 24px 28px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
-
-/* مرحلة النتيجة: البطاقة في الأعلى، ومشهد VR كامل خلفها */
-#phase-result.active { align-items: flex-start; padding-top: 30px; }
-#phase-result.active .phase-content { max-width: 600px; }
 
 .result-icon {
   font-size: 3.5rem;

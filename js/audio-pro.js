@@ -1,5 +1,10 @@
 /* =========================================================
- *  audio-pro.js — Advanced audio
+ *  audio-pro.js — Advanced audio (extends base audio.js)
+ *
+ *  Loaded UNCONDITIONALLY. The "-pro" suffix is historical —
+ *  it does NOT refer to the ?pro=1 graphics flag. Adds a reverb
+ *  + ambient drone layer on top of the base audio system.
+ *
  *  - Procedural reverb (ConvolverNode with synthesized impulse)
  *  - Per-environment reverb presets (garden=open, dark=cavern)
  *  - Dynamic wind/ambient layer that intensifies with speed

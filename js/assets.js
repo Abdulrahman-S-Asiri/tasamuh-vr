@@ -160,10 +160,8 @@ const Assets = (() => {
           }
         });
       }
-      // Broadcast ready event so world-builder / realism can rebuild / reskin
+      // Broadcast ready so world-builder, realism, and quality can refresh.
       sceneEl.emit('assets-ready');
-      // Re-run quality-boost so anisotropy + shadows apply to new textures
-      sceneEl.emit('child-attached');
       console.log('[assets] boot complete');
     });
   }

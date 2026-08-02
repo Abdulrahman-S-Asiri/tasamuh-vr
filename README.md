@@ -19,7 +19,7 @@
 
 ---
 
-## 🚀 التشغيل
+## 🚀 التشغيل المحلي
 
 ```bash
 # Python
@@ -33,6 +33,32 @@ npx serve .
 - 💻 الكمبيوتر: `http://localhost:8080`
 - 📱 الجوال (نفس الواي‌فاي): `http://[IP-الكمبيوتر]:8080`
 - 🥽 Meta Quest 3S: نفس الرابط من متصفح Quest، ثم اضغط زر Enter VR
+
+---
+
+## 🌐 النشر (Deploy)
+
+المشروع موقع **ثابت (Static)** بدون build step — يشتغل على أي استضافة ثابتة مباشرة.
+
+### GitHub Pages
+1. ارفع المشروع لمستودع GitHub.
+2. **Settings → Pages → Source** → اختر `main` branch + `/ (root)`.
+3. افتح الرابط: `https://<username>.github.io/<repo>/`.
+
+### Netlify (السحب والإفلات)
+- روح **https://app.netlify.com/drop** واسحب مجلد المشروع كامل.
+- أو اربط مستودع GitHub → Netlify يكتشف الإعدادات تلقائياً (بدون build command، publish directory = `.`).
+
+### Vercel
+```bash
+npx vercel
+```
+اقبل الإعدادات الافتراضية (Static site, no build).
+
+### Cloudflare Pages
+- اربط المستودع، اترك Build command فاضي، Build output = `/`.
+
+> ⚠️ **ملاحظة مهمة لـ VR:** Meta Quest يتطلب **HTTPS** لتفعيل WebXR. كل الخدمات أعلاه توفّره افتراضياً.
 
 ---
 
@@ -101,6 +127,32 @@ tasamuh-vr/
 
 ---
 
+## 🚩 معاملات URL للتخصيص
+
+| المعامل | الاستخدام |
+|---------|----------|
+| `?pro=1` | يفعّل الجرافيكس المحسّن (HDRI، post-FX، Water2، GLTF NPCs، GPU instancing). للأجهزة القوية فقط. |
+| `?debug=1` | يفعّل سجلّات التطوير + شاشة الـ debug العائمة. صامت افتراضياً. |
+| `?tier=high\|mid\|low` | يجبر مستوى جودة معيّناً (للاختبار). |
+
+مثال: `https://your-site.com/?pro=1&debug=1`
+
+---
+
+## ✅ قائمة التحقّق قبل النشر
+
+- [ ] الموقع يعمل على HTTPS (Quest يرفض HTTP)
+- [ ] الكونسول نظيف بدون `?debug=1` (لا توجد سجلّات `[Pro]` أو `[quality]`)
+- [ ] جميع ملفات الصوت تُحمَّل، أو fallback إلى TTS صامت بدون أخطاء
+- [ ] على iPhone: نقطة برتقالية تظهر على زر الصوت قبل أول ضغطة
+- [ ] على Quest 3: زر "دخول الـ VR" يظهر، والـ HUDs تختفي عند الدخول
+- [ ] التدفّق الكامل يعمل: تسامح/صامت + انتقام/أشد + انتقام/مماثل
+- [ ] إعادة التجربة من شاشة النتيجة تعيد الحالة بالكامل
+- [ ] الاختصارات: `1` و `2` تختار الأبواب من لوحة المفاتيح
+- [ ] على شاشة 360 بكسل: لا يوجد قص للأزرار
+
+---
+
 ## 🔧 التخصيص السريع
 
 ### غيّر النصوص أو شجرة القرارات
@@ -114,17 +166,17 @@ tasamuh-vr/
 ```
 
 ### أضف ملفات صوت بشرية
-ضع تسجيلاتك في:
+ضع تسجيلاتك في (الصيغة المدعومة: `.m4a` / AAC):
 ```
-assets/voices/male/1.mp3   ← الجملة الأولى ذكر
-assets/voices/male/2.mp3
-assets/voices/male/3.mp3
-assets/voices/female/1.mp3
-assets/voices/female/2.mp3
-assets/voices/female/3.mp3
-assets/voices/closing.mp3
+assets/voices/male/1.m4a   ← الجملة الأولى ذكر
+assets/voices/male/2.m4a
+assets/voices/male/3.m4a
+assets/voices/female/1.m4a
+assets/voices/female/2.m4a
+assets/voices/female/3.m4a
+assets/voices/closing.m4a
 ```
-المشروع يكتشفها تلقائياً ويستخدم HRTF للصوت المكاني.
+المشروع يكتشفها تلقائياً ويستخدم HRTF للصوت المكاني. إذا فُقد أي ملف، يرجع تلقائياً لنطق Web Speech.
 
 **مصادر مقترحة:** ElevenLabs (أفضل صوت عربي AI)، Fiverr، أو سجّل بنفسك.
 

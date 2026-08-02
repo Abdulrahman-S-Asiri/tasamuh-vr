@@ -2,6 +2,17 @@
 /*  التوافق مع الشاشات المختلفة                   */
 /* ============================================= */
 
+/* الجوال الصغير جداً (≤360px — هواتف اقتصادية) */
+@media (max-width: 360px) {
+  .intro-title    { font-size: 1.2rem; line-height: 1.4; }
+  .intro-subtitle { font-size: 0.85rem; }
+  .gender-options { gap: 8px; }
+  .btn-gender     { width: 100%; max-width: 240px; padding: 12px 24px; }
+  .choice-card    { width: 95%; padding: 14px; }
+  .phase-content  { padding: 14px; }
+  .quest-hint     { font-size: 0.75rem; padding: 6px 10px; }
+}
+
 /* الجوال */
 @media (max-width: 600px) {
   .gender-options {

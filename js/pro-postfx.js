@@ -152,10 +152,15 @@ const ProPostFX = (() => {
     const origRender = renderer.render.bind(renderer);
 
     const composerRender = (s, c) => {
-      if (_inComposer) { origRender(s, c); return; }
+      const isMainRender = s === threeScene && c === camera;
+      if (_inComposer || !isMainRender) { origRender(s, c); return; }
+
       _inComposer = true;
-      _composer.render();
-      _inComposer = false;
+      try {
+        _composer.render();
+      } finally {
+        _inComposer = false;
+      }
     };
 
     renderer.render = composerRender;

@@ -160,10 +160,11 @@ const ProEnvironment = (() => {
       });
       w2.rotation.x = -Math.PI / 2;
       w2.receiveShadow = true;
-      mesh.parent && mesh.parent.remove(mesh);
 
-      const group = mesh.parent || new T.Group();
-      group.add(w2);
+      const parent = mesh.parent;
+      if (!parent) return;
+      parent.remove(mesh);
+      parent.add(w2);
       _waterMeshes.push(w2.material);
       console.log('[Pro Env] Water2 (reflective) ✓');
     }).catch(() => {
